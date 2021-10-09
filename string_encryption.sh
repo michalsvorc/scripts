@@ -17,7 +17,7 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-version='1.1.0'
+version='1.1.1'
 filename=${0##*/}
 
 #===============================================================================
@@ -26,11 +26,11 @@ filename=${0##*/}
 
 usage() {
   cat <<EOF
-Usage:  $filename [options] <input_string>
+Usage:  $filename <command> <input_string>
 
 Encrypt or decrypt string with a password, base64 encoding, no salt.
 
-Options:
+Commands:
   -h, --help      Show this screen and exit.
   -v, --version   Show program version and exit.
   -e              String encryption.
