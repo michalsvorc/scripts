@@ -8,10 +8,10 @@
 # Abort the script on errors and undbound variables
 #===============================================================================
 
-set -o errexit      # abort on nonzero exit status
-set -o nounset      # abort on unbound variable
-set -o pipefail     # don't hide errors within pipes
-# set -o xtrace       # debugging
+set -o errexit      # Abort on nonzero exit status.
+set -o nounset      # Abort on unbound variable.
+set -o pipefail     # Don't hide errors within pipes.
+# set -o xtrace       # Set debugging.
 
 #===============================================================================
 # Variables
@@ -26,15 +26,13 @@ argv0=${0##*/}
 
 usage() {
   cat <<EOF
+Usage:  $argv0 [options] <string length>
 
-  Usage:  ${argv0} [options] <string length>
+Generate random string with safe characters and print it to stdout.
 
-  Generate random string with safe characters and print it to stdout.
-
-  Options:
-    -h, --help      Show this screen and exit.
-    -v, --version   Show program version and exit.
-
+Options:
+  -h, --help      Show this screen and exit.
+  -v, --version   Show program version and exit.
 EOF
 exit ${1:-0}
 }
@@ -72,11 +70,11 @@ if test $# -eq 0; then
 fi
 
 case "${1:-}" in
-  -h | --help | --h* )
+  -h | --help )
     usage 0
     ;;
   -v | --version )
-    printf '%s version: %s\n' "${argv0}" $(version)
+    printf '%s version: %s\n' $argv0 $(version)
     exit 0
     ;;
 
@@ -85,7 +83,7 @@ case "${1:-}" in
 
     case $string_length in
       ''|*[!0-9]*)
-        die "$string_length is invalid argument for string length."
+        die "${string_length} is invalid argument for string length."
         ;;
       *)
         ;;
