@@ -1,7 +1,6 @@
 #!/usr/bin/env sh
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
-# Refer to the usage() function below for usage.
 # This program is under MIT license (https://opensource.org/licenses/MIT).
 # Dependencies: openssl
 
@@ -18,8 +17,8 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-version='1.0.0'
-argv0=${0##*/}
+version='1.1.0'
+filename=${0##*/}
 
 #===============================================================================
 # Usage
@@ -27,9 +26,9 @@ argv0=${0##*/}
 
 usage() {
   cat <<EOF
-Usage:  $argv0 [options] <input_string>
+Usage:  $filename [options] <input_string>
 
-Encrypt or decrypt string with a password, base64 encoding, and no salt.
+Encrypt or decrypt string with a password, base64 encoding, no salt.
 
 Options:
   -h, --help      Show this screen and exit.
@@ -37,7 +36,7 @@ Options:
   -e              String encryption.
   -d              String decryption.
 EOF
-exit ${1:-0}
+  exit ${1:-0}
 }
 
 #===============================================================================
@@ -45,15 +44,15 @@ exit ${1:-0}
 #===============================================================================
 
 die() {
-  local message="${1}"
+  local message="$1"
 
-  printf 'Error: %s\n\n' "${message}" >&2
+  printf 'Error: %s\n\n' "$message" >&2
 
   usage 1 1>&2
 }
 
 version() {
-  printf '%s\n' "${version}"
+  printf '%s version: %s\n' "$filename" "$version"
 }
 
 password_input_prompt() {
@@ -62,26 +61,23 @@ password_input_prompt() {
   read password
   stty $stty_orig
 
-  printf $password
+  printf '%s\n' "$password"
 }
 
 string_encryption() {
-  local comand=$1
-  local input_string=$2
+  local comand="$1"
+  local input_string="$2"
+  local password="$3"
 
-  printf 'Enter password (hidden input): '
-  local password=$(password_input_prompt)
-  printf '\n'
-
-  printf '%s\n' $input_string | \
+  printf '%s\n' "$input_string" | \
     openssl \
     enc \
-    $command \
+    "$command" \
     -base64 \
     -aes-256-cbc \
     -nosalt \
     -pbkdf2 \
-    -k $password
+    -k "$password"
   }
 
 #===============================================================================
@@ -97,17 +93,31 @@ case "${1:-}" in
     usage 0
     ;;
   -v | --version )
-    printf '%s version: %s\n' $argv0 $(version)
+    version
     exit 0
     ;;
 
   -e | -d )
-    command=$1
+    command="$1"
     shift
 
     test $# -eq 0 && die 'Missing the input string.'
-    input_string=$1
-    string_encryption $command $input_string
+    input_string="$1"
+
+    printf 'Enter password: '
+    password=$(password_input_prompt)
+    printf '\n'
+
+    if [ "$command" == '-e' ]; then
+      printf 'Re-enter password: '
+      password_verification=$(password_input_prompt)
+      printf '\n'
+
+      [ "$password" == "$password_verification" ] \
+        || (printf 'Passwords do not match.\n' && exit 1)
+    fi
+
+    string_encryption "$command" "$input_string" "$password"
     ;;
 
   * )
