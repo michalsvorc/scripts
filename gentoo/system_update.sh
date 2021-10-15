@@ -77,7 +77,7 @@ case "${1:-}" in
     ;;
 esac
 
-additional_emerge_flags="${1:-}"
+additional_emerge_flags="${1:--v}"
 
 emerge \
   "-${emerge_flags}" \
