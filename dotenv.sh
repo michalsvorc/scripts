@@ -2,7 +2,7 @@
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: rsync
+# Dependencies: cut, grep
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -20,24 +20,23 @@ set -o pipefail     # Don't hide errors within pipes.
 version='1.0.0'
 argv0=${0##*/}
 
+env_path_default="${PWD}/.env"
+
 #===============================================================================
 # Usage
 #===============================================================================
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] <source dir> [target dir: \$PWD]
+Usage:  ${argv0} [options] <key>
 
-Make a backup with rsync directory synchronization.
-Use with caution, improper usage may result in data loss.
+Read a single value from an .env file.
 
 Options:
-    -h, --help      Show this screen and exit.
+    -h, --help      Show help screen and exit.
     -v, --version   Show program version and exit.
-
-Examples:
-    ${argv0} /path/to/source/dir
-    ${argv0} /path/to/source/dir/ /path/to/target/dir/
+    -e, --env-path  Provide path to .env file.
+                    Defaults to "\$PWD/.env".
 EOF
   exit ${1:-0}
 }
@@ -58,32 +57,23 @@ version() {
   printf '%s version: %s\n' "$argv0" "$version"
 }
 
-synchronize_dirs() {
-  local source_dir="$1"
-  local target_dir="$2"
+get_env_value() {
+  local env_path="$1"
+  local key="${2:-}"
 
-  [ ! -d "$source_dir"  ] \
-    && die 'Source directory "%s" does not exist' "$source_dir"
+  [ ! -f "$env_path" ] \
+    && die "$(printf 'File not found: "%s".' "$env_path" )"
 
-  [ ! -d "$target_dir"  ] \
-    && die 'Target directory "%s" does not exist' "$target_dir"
+  [ -z "$key" ] && die 'Empty "key" argument.'
 
-  printf 'Synchronizing directories:\n"%s" -> "%s"\n\n' \
-    "$source_dir" \
-    "$target_dir"
+  local value=$(grep -e "^${key}=.*" "$env_path")
 
-  printf 'Warning: The --delete option is enabled.\n\n'
+  [ -z "$value" ] \
+    && die "$(
+      printf 'Value with key "%s" not found in "%s".' "$key" "$env_path"
+    )"
 
-  read -p 'Press ENTER key to continue ...'
-
-  rsync \
-    -aAXH \
-    --delete \
-    --links \
-    --exclude={'lost+found'} \
-    --info=progress2 \
-    "$source_dir" \
-    "$target_dir"
+  printf '%s' "$value" | cut -d '=' -f2
 }
 
 #===============================================================================
@@ -91,7 +81,8 @@ synchronize_dirs() {
 #===============================================================================
 
 test $# -eq 0 && die 'No arguments provided.'
-test $# -gt 2 && die 'Maximum number of arguments exceeded.'
+
+env_path="$env_path_default"
 
 case "${1:-}" in
   -h | --help )
@@ -101,10 +92,17 @@ case "${1:-}" in
     version
     exit 0
     ;;
+  -e | --env-path )
+    shift
+    env_path="$1"
+    [ -z "$env_path" ] && die 'Missing argument for option "--env-path".'
+
+    shift
+    ;;
 esac
 
-source_dir="${1:-}"
-target_dir="${2:-$PWD}"
+test $# -eq 0 && die 'Missing "key" argument.'
 
-synchronize_dirs "$source_dir" "$target_dir"
+key="$1"
 
+get_env_value "$env_path" "$key"

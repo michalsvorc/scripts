@@ -2,7 +2,7 @@
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: rsync
+# Source: https://stackoverflow.com/a/27875395/3553541
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -26,18 +26,13 @@ argv0=${0##*/}
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] <source dir> [target dir: \$PWD]
+Usage:  ${argv0} [options]
 
-Make a backup with rsync directory synchronization.
-Use with caution, improper usage may result in data loss.
+Prompt user for [y/N] key press. Print True/False based on user input.
 
 Options:
-    -h, --help      Show this screen and exit.
+    -h, --help      Show help screen and exit.
     -v, --version   Show program version and exit.
-
-Examples:
-    ${argv0} /path/to/source/dir
-    ${argv0} /path/to/source/dir/ /path/to/target/dir/
 EOF
   exit ${1:-0}
 }
@@ -58,40 +53,29 @@ version() {
   printf '%s version: %s\n' "$argv0" "$version"
 }
 
-synchronize_dirs() {
-  local source_dir="$1"
-  local target_dir="$2"
+prompt_user() {
+  local default_question='Are you sure?'
+  local default_answer='N'
 
-  [ ! -d "$source_dir"  ] \
-    && die 'Source directory "%s" does not exist' "$source_dir"
+  local question="${1:-$default_question}"
 
-  [ ! -d "$target_dir"  ] \
-    && die 'Target directory "%s" does not exist' "$target_dir"
+  printf '%s\n' "$question [y/N] "
 
-  printf 'Synchronizing directories:\n"%s" -> "%s"\n\n' \
-    "$source_dir" \
-    "$target_dir"
+  old_stty_cfg=$(stty -g)
+  stty raw -echo
+  answer=$( while ! head -c 1 | grep -i '[ny]' ;do true ;done )
+  stty $old_stty_cfg
 
-  printf 'Warning: The --delete option is enabled.\n\n'
-
-  read -p 'Press ENTER key to continue ...'
-
-  rsync \
-    -aAXH \
-    --delete \
-    --links \
-    --exclude={'lost+found'} \
-    --info=progress2 \
-    "$source_dir" \
-    "$target_dir"
+  if (printf '%s' "${answer:-$default_answer}" | grep -iq "^y") ;then
+    return 0
+  else
+    return 1
+  fi
 }
 
 #===============================================================================
 # Execution
 #===============================================================================
-
-test $# -eq 0 && die 'No arguments provided.'
-test $# -gt 2 && die 'Maximum number of arguments exceeded.'
 
 case "${1:-}" in
   -h | --help )
@@ -101,10 +85,12 @@ case "${1:-}" in
     version
     exit 0
     ;;
+  * )
+    test $# -eq 0 || die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
+    ;;
 esac
 
-source_dir="${1:-}"
-target_dir="${2:-$PWD}"
-
-synchronize_dirs "$source_dir" "$target_dir"
+prompt_user 'Do you want to continue?' \
+  && printf 'True\n' \
+  || printf 'False\n'
 

@@ -1,18 +1,16 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
-# Dependencies: pass, fzf, sed
-# Refer to the usage() function below for usage.
-# This program is under MIT license (https://opensource.org/licenses/MIT).
+# License: MIT license (https://opensource.org/licenses/MIT)
 
 #===============================================================================
-# Abort the script on errors and undbound variables
+# Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # abort on nonzero exit status
-set -o nounset      # abort on unbound variable
-set -o pipefail     # don't hide errors within pipes
-# set -o xtrace       # debugging
+set -o errexit      # Abort on nonzero exit status.
+set -o nounset      # Abort on unbound variable.
+set -o pipefail     # Don't hide errors within pipes.
+# set -o xtrace       # Set debugging.
 
 #===============================================================================
 # Variables
@@ -21,23 +19,27 @@ set -o pipefail     # don't hide errors within pipes
 version='1.0.0'
 argv0=${0##*/}
 
+default_input='World'
+
 #===============================================================================
 # Usage
 #===============================================================================
 
 usage() {
   cat <<EOF
+Usage:  ${argv0} [options] command
 
-  Usage:  ${argv0} [options] [pass command: -c1]
+Basic Unix shell script template.
 
-  Filter pass listings with fzf and execute pass command on selected entry.
-
-  Options:
-    -h, --help      Show this screen and exit.
+Options:
+    -h, --help      Show help screen and exit.
     -v, --version   Show program version and exit.
 
+Commands:
+    hello <string>  Print a welcoming message.
+                    Defaults to "Hello ${default_input}".
 EOF
-exit ${1:-0}
+  exit ${1:-0}
 }
 
 #===============================================================================
@@ -45,53 +47,43 @@ exit ${1:-0}
 #===============================================================================
 
 die() {
-  local message="${1}"
+  local message="$1"
 
-  printf 'Error: %s\n' "${message}" >&2
+  printf 'Error: %s\n\n' "$message" >&2
 
   usage 1 1>&2
 }
 
 version() {
-  printf '%s\n' "${version}"
+  printf '%s version: %s\n' "$argv0" "$version"
 }
 
-select_pass_file() {
-  local pass_file=$(
+hello() {
+  local input="$1"
 
-  find "$HOME/.password-store" -name '*.gpg' -printf '%P\n' \
-    | sed -e 's:.gpg$::gi' \
-    | fzf
-  )
-
-  printf '%s' "${pass_file}"
-}
-
-execute_pass_command() {
-  local pass_command=$1
-  local pass_file=$(select_pass_file)
-
-  printf '%s\n' "${pass_file}"
-
-  pass ${pass_command:-'-c1'} $pass_file
+  printf 'Hello %s\n' "$input"
 }
 
 #===============================================================================
 # Execution
 #===============================================================================
 
+test $# -eq 0 && die 'No arguments provided.'
+
 case "${1:-}" in
-  -h | --help | --h* )
+  -h | --help )
     usage 0
     ;;
   -v | --version )
-    printf '%s version: %s\n' "${argv0}" $(version)
+    version
     exit 0
     ;;
-
+  hello )
+    shift
+    hello "${1:-$default_input}"
+    ;;
   * )
-    execute_pass_command "${1:-}"
+    die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
     ;;
 esac
-
 

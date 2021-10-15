@@ -1,17 +1,17 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
-# Refer to the usage() function below for usage.
-# This program is under MIT license (https://opensource.org/licenses/MIT).
+# License: MIT license (https://opensource.org/licenses/MIT)
+# Dependencies: emerge
 
 #===============================================================================
-# Abort the script on errors and undbound variables
+# Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # abort on nonzero exit status
-set -o nounset      # abort on unbound variable
-set -o pipefail     # don't hide errors within pipes
-# set -o xtrace       # debugging
+set -o errexit      # Abort on nonzero exit status.
+set -o nounset      # Abort on unbound variable.
+set -o pipefail     # Don't hide errors within pipes.
+# set -o xtrace       # Set debugging.
 
 #===============================================================================
 # Variables
@@ -20,26 +20,31 @@ set -o pipefail     # don't hide errors within pipes
 version='1.0.0'
 argv0=${0##*/}
 
+emerge_flags='-uvDN --with-bdeps=y'
+
 #===============================================================================
 # Usage
 #===============================================================================
 
 usage() {
   cat <<EOF
+Usage:  ${argv0} [options] [additional flags]
 
-  Usage:  ${argv0} [options] command
+Update Gentoo Linux @world packages with predefined emerge flags.
 
-  Basic Unix shell script template.
+Deafult emerge flags: -${emerge_flags}
 
-  Options:
-    -h, --help      Show this screen and exit.
+You can supply additional flags.
+
+Options:
+    -h, --help      Show help screen and exit.
     -v, --version   Show program version and exit.
 
-  Commands:
-    hello           Print Hello World message.
-
+Examples:
+    ${argv0}        Update packages with default flags.
+    ${argv0} -p     Pretend update to see what will be updated.
 EOF
-exit ${1:-0}
+  exit ${1:-0}
 }
 
 #===============================================================================
@@ -47,44 +52,34 @@ exit ${1:-0}
 #===============================================================================
 
 die() {
-  local message="${1}"
+  local message="$1"
 
-  printf 'Error: %s\n' "${message}" >&2
+  printf 'Error: %s\n\n' "$message" >&2
 
   usage 1 1>&2
 }
 
 version() {
-  printf '%s\n' "${version}"
-}
-
-hello() {
-  printf 'Hello World\n'
+  printf '%s version: %s\n' "$argv0" "$version"
 }
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-if test $# -eq 0; then
-  die 'No arguments provided.'
-fi
-
 case "${1:-}" in
-  -h | --help | --h* )
+  -h | --help )
     usage 0
     ;;
   -v | --version )
-    printf '%s version: %s\n' "${argv0}" $(version)
+    version
     exit 0
-    ;;
-
-  hello )
-    hello
-    exit 0
-    ;;
-
-  * )
-    die "Unrecognized argument ${1#-}."
     ;;
 esac
+
+additional_emerge_flags="${1:-}"
+
+emerge \
+  "${emerge_flags}" \
+  "$additional_emerge_flags" \
+  @world

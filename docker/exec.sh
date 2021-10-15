@@ -2,7 +2,7 @@
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: rsync
+# Dependencies: awk, docker, fzf, sed
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -20,24 +20,27 @@ set -o pipefail     # Don't hide errors within pipes.
 version='1.0.0'
 argv0=${0##*/}
 
+shell_default='zsh'
+
 #===============================================================================
 # Usage
 #===============================================================================
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] <source dir> [target dir: \$PWD]
+Usage:  ${argv0} [options]
 
-Make a backup with rsync directory synchronization.
-Use with caution, improper usage may result in data loss.
+Select and execute a Docker container in interactive tty login shell session.
+Interactive shell defaults to ${shell_default}.
 
 Options:
-    -h, --help      Show this screen and exit.
-    -v, --version   Show program version and exit.
+    -h, --help              Show help screen and exit.
+    -v, --version           Show program version and exit.
+    -s, --shell <string>    Specify a shell.
 
 Examples:
-    ${argv0} /path/to/source/dir
-    ${argv0} /path/to/source/dir/ /path/to/target/dir/
+    ${argv0}
+    ${argv0} --shell bash
 EOF
   exit ${1:-0}
 }
@@ -58,40 +61,20 @@ version() {
   printf '%s version: %s\n' "$argv0" "$version"
 }
 
-synchronize_dirs() {
-  local source_dir="$1"
-  local target_dir="$2"
+search_containers() {
+  printf '%s\n' "$(docker ps -a | sed 1d | fzf | awk '{print $1}')"
+}
 
-  [ ! -d "$source_dir"  ] \
-    && die 'Source directory "%s" does not exist' "$source_dir"
+execute_container() {
+  local container="$1"
+  local shell="$2"
 
-  [ ! -d "$target_dir"  ] \
-    && die 'Target directory "%s" does not exist' "$target_dir"
-
-  printf 'Synchronizing directories:\n"%s" -> "%s"\n\n' \
-    "$source_dir" \
-    "$target_dir"
-
-  printf 'Warning: The --delete option is enabled.\n\n'
-
-  read -p 'Press ENTER key to continue ...'
-
-  rsync \
-    -aAXH \
-    --delete \
-    --links \
-    --exclude={'lost+found'} \
-    --info=progress2 \
-    "$source_dir" \
-    "$target_dir"
+  docker exec -it "$container" "/bin/$shell" -l
 }
 
 #===============================================================================
 # Execution
 #===============================================================================
-
-test $# -eq 0 && die 'No arguments provided.'
-test $# -gt 2 && die 'Maximum number of arguments exceeded.'
 
 case "${1:-}" in
   -h | --help )
@@ -101,10 +84,12 @@ case "${1:-}" in
     version
     exit 0
     ;;
+  -s | --shell )
+    shift
+    shell="${1:-}"
+    [ -z "$shell" ] && die 'Missing argument for option "--shell".'
+    ;;
 esac
 
-source_dir="${1:-}"
-target_dir="${2:-$PWD}"
-
-synchronize_dirs "$source_dir" "$target_dir"
+execute_container $(search_containers) "${shell:-$shell_default}"
 

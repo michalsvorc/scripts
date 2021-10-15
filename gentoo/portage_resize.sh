@@ -2,7 +2,7 @@
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: rsync
+# Dependencies: df, grep, mount
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -20,24 +20,30 @@ set -o pipefail     # Don't hide errors within pipes.
 version='1.0.0'
 argv0=${0##*/}
 
+target_dir='/var/tmp/portage'
+
 #===============================================================================
 # Usage
 #===============================================================================
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] <source dir> [target dir: \$PWD]
+Usage:  ${argv0} [options] <mount size>
 
-Make a backup with rsync directory synchronization.
-Use with caution, improper usage may result in data loss.
+Resize portage temporary directory "${target_dir}".
+
+Directory should be registered in "/etc/fstab".
 
 Options:
-    -h, --help      Show this screen and exit.
+    -h, --help      Show help screen and exit.
     -v, --version   Show program version and exit.
 
+Size: Valid size value for mount command.
+
 Examples:
-    ${argv0} /path/to/source/dir
-    ${argv0} /path/to/source/dir/ /path/to/target/dir/
+    ${argv0} 8G
+
+See: https://wiki.gentoo.org/wiki/Portage_TMPDIR_on_tmpfs
 EOF
   exit ${1:-0}
 }
@@ -58,32 +64,10 @@ version() {
   printf '%s version: %s\n' "$argv0" "$version"
 }
 
-synchronize_dirs() {
-  local source_dir="$1"
-  local target_dir="$2"
+hello() {
+  local input="$1"
 
-  [ ! -d "$source_dir"  ] \
-    && die 'Source directory "%s" does not exist' "$source_dir"
-
-  [ ! -d "$target_dir"  ] \
-    && die 'Target directory "%s" does not exist' "$target_dir"
-
-  printf 'Synchronizing directories:\n"%s" -> "%s"\n\n' \
-    "$source_dir" \
-    "$target_dir"
-
-  printf 'Warning: The --delete option is enabled.\n\n'
-
-  read -p 'Press ENTER key to continue ...'
-
-  rsync \
-    -aAXH \
-    --delete \
-    --links \
-    --exclude={'lost+found'} \
-    --info=progress2 \
-    "$source_dir" \
-    "$target_dir"
+  printf 'Hello %s\n' "$input"
 }
 
 #===============================================================================
@@ -91,7 +75,6 @@ synchronize_dirs() {
 #===============================================================================
 
 test $# -eq 0 && die 'No arguments provided.'
-test $# -gt 2 && die 'Maximum number of arguments exceeded.'
 
 case "${1:-}" in
   -h | --help )
@@ -103,8 +86,7 @@ case "${1:-}" in
     ;;
 esac
 
-source_dir="${1:-}"
-target_dir="${2:-$PWD}"
+size="${1:-}"
 
-synchronize_dirs "$source_dir" "$target_dir"
-
+mount -o remount,size="$size" "$target_dir" \
+  && (df | grep "$target_dir")

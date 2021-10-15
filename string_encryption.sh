@@ -1,11 +1,11 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
-# This program is under MIT license (https://opensource.org/licenses/MIT).
+# License: MIT license (https://opensource.org/licenses/MIT)
 # Dependencies: openssl
 
 #===============================================================================
-# Abort the script on errors and undbound variables
+# Abort the script on errors and unbound variables
 #===============================================================================
 
 set -o errexit      # Abort on nonzero exit status.
@@ -17,8 +17,10 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-version='1.1.1'
-filename=${0##*/}
+version='1.0.1'
+argv0=${0##*/}
+
+cipher='aes-256-cbc'
 
 #===============================================================================
 # Usage
@@ -26,15 +28,19 @@ filename=${0##*/}
 
 usage() {
   cat <<EOF
-Usage:  $filename <command> <input_string>
+Usage:  ${argv0} [options] <command> <input_string>
 
-Encrypt or decrypt string with a password, base64 encoding, no salt.
+Encrypt and decrypt a string.
+The encryption uses ${cipher} cipher, password protection, and no salt.
+The resulting string is encoded in base64.
+
+Options:
+    -h, --help      Show help screen and exit.
+    -v, --version   Show program version and exit.
 
 Commands:
-  -h, --help      Show this screen and exit.
-  -v, --version   Show program version and exit.
-  -e              String encryption.
-  -d              String decryption.
+    encrypt         Encrypt the input string.
+    decrypt         Decrypt the input string.
 EOF
   exit ${1:-0}
 }
@@ -52,7 +58,7 @@ die() {
 }
 
 version() {
-  printf '%s version: %s\n' "$filename" "$version"
+  printf '%s version: %s\n' "$argv0" "$version"
 }
 
 password_input_prompt() {
@@ -65,28 +71,35 @@ password_input_prompt() {
 }
 
 string_encryption() {
-  local comand="$1"
+  local operation="$1"
   local input_string="$2"
   local password="$3"
+
+  case "$operation" in
+    encrypt)
+      command='-e'
+      ;;
+    decrypt)
+      command='-d'
+      ;;
+  esac
 
   printf '%s\n' "$input_string" | \
     openssl \
     enc \
-    "$command" \
+    "${command:-}" \
     -base64 \
-    -aes-256-cbc \
+    "-${cipher}" \
     -nosalt \
     -pbkdf2 \
     -k "$password"
-  }
+}
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-if test $# -eq 0; then
-  die 'No arguments provided.'
-fi
+test $# -eq 0 && die 'No arguments provided.'
 
 case "${1:-}" in
   -h | --help )
@@ -96,9 +109,8 @@ case "${1:-}" in
     version
     exit 0
     ;;
-
-  -e | -d )
-    command="$1"
+  encrypt | decrypt )
+    operation="$1"
     shift
 
     test $# -eq 0 && die 'Missing the input string.'
@@ -108,19 +120,21 @@ case "${1:-}" in
     password=$(password_input_prompt)
     printf '\n'
 
-    if [ "$command" == '-e' ]; then
+    [ -z "$password" ] && die 'Provided password is empty.'
+
+    if [ "$operation" == 'encrypt' ]; then
       printf 'Re-enter password: '
       password_verification=$(password_input_prompt)
       printf '\n'
 
       [ "$password" == "$password_verification" ] \
-        || (printf 'Passwords do not match.\n' && exit 1)
+        || die 'Provided passwords do not match.'
     fi
 
-    string_encryption "$command" "$input_string" "$password"
+    string_encryption "$operation" "$input_string" "$password"
     ;;
-
   * )
-    die "Unrecognized argument ${1#-}."
+    die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
     ;;
 esac
+
