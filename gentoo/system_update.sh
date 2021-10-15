@@ -20,7 +20,7 @@ set -o pipefail     # Don't hide errors within pipes.
 version='1.0.0'
 argv0=${0##*/}
 
-emerge_flags='-uvDN --with-bdeps=y'
+emerge_flags='uvDN'
 
 #===============================================================================
 # Usage
@@ -32,7 +32,7 @@ Usage:  ${argv0} [options] [additional flags]
 
 Update Gentoo Linux @world packages with predefined emerge flags.
 
-Deafult emerge flags: -${emerge_flags}
+Deafult emerge flags: ${emerge_flags}
 
 You can supply additional flags.
 
@@ -42,7 +42,7 @@ Options:
 
 Examples:
     ${argv0}        Update packages with default flags.
-    ${argv0} -p     Pretend update to see what will be updated.
+    ${argv0} -p     Pretended update to see list of changes.
 EOF
   exit ${1:-0}
 }
@@ -80,6 +80,7 @@ esac
 additional_emerge_flags="${1:-}"
 
 emerge \
-  "${emerge_flags}" \
+  "-${emerge_flags}" \
   "$additional_emerge_flags" \
+   --with-bdeps=y \
   @world
