@@ -31,6 +31,7 @@ usage() {
 Usage:  ${argv0} [options]
 
 Select and execute a Docker container in interactive tty login shell session.
+If the container is not running, start it.
 Interactive shell defaults to ${shell_default}.
 
 Options:
@@ -65,6 +66,17 @@ search_containers() {
   printf '%s\n' "$(docker ps -a | sed 1d | fzf | awk '{print $1}')"
 }
 
+test_container_status() {
+  local status="$1"
+  local container="$2"
+
+  test=$(docker ps -aq -f status="$status" -f id="$container")
+
+  [ "$test"  == "$container" ] \
+    && true \
+    || false
+}
+
 execute_container() {
   local container="$1"
   local shell="$2"
@@ -91,5 +103,10 @@ case "${1:-}" in
     ;;
 esac
 
-execute_container $(search_containers) "${shell:-$shell_default}"
+container=$(search_containers)
+
+$(test_container_status 'running' "$container") \
+  || (printf 'Starting container ' ; docker start "$container")
+
+execute_container "$container" "${shell:-$shell_default}"
 
