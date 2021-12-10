@@ -77,10 +77,8 @@ case "${1:-}" in
     ;;
 esac
 
-additional_emerge_flags="${1:--v}"
-
 emerge \
   "-${emerge_flags}" \
-  "$additional_emerge_flags" \
+  $@ \
    --with-bdeps=y \
   @world
