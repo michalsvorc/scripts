@@ -28,21 +28,22 @@ emerge_flags='uvDN'
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] [additional flags]
+Usage:  ${argv0} [options] [additional emerge flags]
 
 Update Gentoo Linux @world packages with predefined emerge flags.
 
 Deafult emerge flags: ${emerge_flags}
 
-You can supply additional flags.
+You can supply additional emerge flags.
 
 Options:
-    -h, --help      Show help screen and exit.
-    -v, --version   Show program version and exit.
+    --help      Show help screen and exit.
+    --version   Show program version and exit.
 
 Examples:
     ${argv0}        Update packages with default flags.
     ${argv0} -p     Pretended update to see list of changes.
+    ${argv0} -av    Ask before update, verbose.
 EOF
   exit ${1:-0}
 }
@@ -68,10 +69,10 @@ version() {
 #===============================================================================
 
 case "${1:-}" in
-  -h | --help )
+  --help )
     usage 0
     ;;
-  -v | --version )
+  --version )
     version
     exit 0
     ;;
