@@ -2,7 +2,6 @@
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: awk, docker, fzf, sed
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -17,7 +16,7 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-version='1.0.0'
+version='1.1.0'
 argv0=${0##*/}
 
 shell_default='zsh'
@@ -28,20 +27,27 @@ shell_default='zsh'
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options]
+Usage:  ${argv0} [options] [arguments...]
 
-Select and execute a Docker container in interactive tty login shell session.
-If the container is not running, start it.
-Interactive shell defaults to ${shell_default}.
+Select and execute a Docker container in interactive login shell session.
+
+Interactive shell defaults to /bin/${shell_default}.
 
 Options:
-    -h, --help              Show help screen and exit.
-    -v, --version           Show program version and exit.
-    -s, --shell <string>    Specify a shell.
+  -h, --help              Show help screen and exit.
+  -v, --version           Show program version and exit.
+  -s, --shell <string>    Specify a shell.
+
+Arguments:
+  Additional Docker exec arguments.
 
 Examples:
-    ${argv0}
-    ${argv0} --shell bash
+  ${argv0}
+  ${argv0} --shell bash
+  ${argv0} --user root
+
+Dependencies:
+  awk, docker, fzf, sed
 EOF
   exit ${1:-0}
 }
@@ -77,13 +83,6 @@ test_container_status() {
     || false
 }
 
-execute_container() {
-  local container="$1"
-  local shell="$2"
-
-  docker exec -it "$container" "/bin/$shell" -l
-}
-
 #===============================================================================
 # Execution
 #===============================================================================
@@ -108,5 +107,9 @@ container=$(search_containers)
 $(test_container_status 'running' "$container") \
   || (printf 'Starting container ' ; docker start "$container")
 
-execute_container "$container" "${shell:-$shell_default}"
+docker exec \
+  -it \
+  $@ \
+  "$container" \
+  "/bin/${shell:-$shell_default}" --login
 
