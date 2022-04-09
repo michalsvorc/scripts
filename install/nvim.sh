@@ -24,24 +24,22 @@ set -o pipefail     # Don't hide errors within pipes.
 
 repository_id="neovim/neovim"
 tag_name="nightly"
-extension='appimage'
 executable="squashfs-root/AppRun"
 executable_dir='bin'
-
-releases_uri="https://api.github.com/repos/${repository_id}/releases"
-asset="${tag_name}.${extension}"
+extension='appimage'
+repository_uri="https://api.github.com/repos/${repository_id}/releases"
 
 #===============================================================================
 # Functions
 #===============================================================================
 
 function get_release_metadata() {
-  local releases_uri="${1}"
+  local repository_uri="${1}"
   local tag_name="${2}"
 
   printf '%s' $(\
     jq -r ".[] | select(.tag_name==\"${tag_name}\")" \
-    <<< $(curl "${releases_uri}")  \
+    <<< $(curl "${repository_uri}")  \
   )
 }
 
@@ -61,8 +59,9 @@ function parse_download_uri() {
 # Execution
 #===============================================================================
 
-release_metadata=$(get_release_metadata $releases_uri $tag_name)
+release_metadata=$(get_release_metadata $repository_uri $tag_name)
 download_uri=$(parse_download_uri $release_metadata $extension)
+asset="${tag_name}.${extension}"
 
 mkdir -p $executable_dir \
   && cd $_ \
