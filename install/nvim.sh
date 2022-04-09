@@ -45,13 +45,13 @@ function get_release_metadata() {
   )
 }
 
-function get_download_uri() {
+function parse_download_uri() {
   local release_metadata="${1}"
   local extension="${2}"
 
   printf '%s' $(\
     jq -r ".assets \
-    | map(select(.name|endswith(\"${extension}\"))).[0] \
+    | map(select(.name|endswith(\"${extension}\")))[0] \
     | .browser_download_url" \
     <<< "${release_metadata}"  \
   )
@@ -62,7 +62,7 @@ function get_download_uri() {
 #===============================================================================
 
 release_metadata=$(get_release_metadata $releases_uri $tag_name)
-download_uri=$(get_download_uri $release_metadata $extension)
+download_uri=$(parse_download_uri $release_metadata $extension)
 
 mkdir -p $executable_dir \
   && cd $_ \
