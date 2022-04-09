@@ -22,36 +22,36 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-repository_id="neovim/neovim"
-tag_name="nightly"
-executable="squashfs-root/AppRun"
-executable_dir='bin'
-extension='appimage'
-repository_uri="https://api.github.com/repos/${repository_id}/releases"
+readonly repository_id='neovim/neovim'
+readonly tag_name='nightly'
+readonly executable='squashfs-root/AppRun'
+readonly executable_dir='bin'
+readonly extension='appimage'
+readonly repository_uri="https://api.github.com/repos/${repository_id}/releases"
 
 #===============================================================================
 # Functions
 #===============================================================================
 
-function get_release_metadata() {
-  local repository_uri="${1}"
-  local tag_name="${2}"
+get_release_metadata() {
+  local repository_uri="$1"
+  local tag_name="$2"
 
   printf '%s' $(\
     jq -r ".[] | select(.tag_name==\"${tag_name}\")" \
-    <<< $(curl "${repository_uri}")  \
+    <<< $(curl "$repository_uri")  \
   )
 }
 
-function parse_download_uri() {
-  local release_metadata="${1}"
-  local extension="${2}"
+parse_download_uri() {
+  local release_metadata="$1"
+  local extension="$2"
 
   printf '%s' $(\
     jq -r ".assets \
-    | map(select(.name|endswith(\"${extension}\")))[0] \
+    | map(select(.name|endswith(\"$extension\")))[0] \
     | .browser_download_url" \
-    <<< "${release_metadata}"  \
+    <<< "$release_metadata"  \
   )
 }
 
@@ -59,16 +59,16 @@ function parse_download_uri() {
 # Execution
 #===============================================================================
 
-release_metadata=$(get_release_metadata $repository_uri $tag_name)
-download_uri=$(parse_download_uri $release_metadata $extension)
+release_metadata=$(get_release_metadata "$repository_uri" "$tag_name")
+download_uri=$(parse_download_uri "$release_metadata" "$extension")
 asset="${tag_name}.${extension}"
 
-mkdir -p $executable_dir \
+mkdir -p "$executable_dir" \
   && cd $_ \
-  && curl -Lo $asset $download_uri \
-  && chmod u+x $asset \
+  && curl -Lo "$asset" "$download_uri" \
+  && chmod u+x "$asset" \
   && "./${asset}" --appimage-extract \
-  && rm $asset \
+  && rm "$asset" \
   && cd - \
-  && ln -sf "${executable_dir}/${executable}" "run"
+  && ln -sf "${executable_dir}/${executable}" 'run'
 
