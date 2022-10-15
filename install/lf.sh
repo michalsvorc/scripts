@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 #
-# Application: LF
-# Description: Application install script.
+# Description: Install script for lf executable.
 # Releases: https://github.com/gokcehan/lf/releases
 #
 # Dependencies: curl, jq
@@ -22,19 +21,50 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
+readonly version='1.0.0'
+readonly argv0=${0##*/}
 readonly repository_id='gokcehan/lf'
 readonly asset='lf-linux-amd64.tar.gz'
-readonly executable_dir='bin'
-
 readonly repository_uri="https://api.github.com/repos/${repository_id}/releases"
+
+output_dir="${PWD}"
+
+#===============================================================================
+# Usage
+#===============================================================================
+
+usage() {
+  cat <<EOF
+Usage:  ${argv0} [options] command
+
+Install script for lf executable.
+
+Options:
+    -h, --help        Show help screen and exit.
+    -v, --version     Show program version and exit.
+    -o, --output-dir  Specify output dir for executable. Defaults to \$PWD.
+
+EOF
+  exit ${1:-0}
+}
 
 #===============================================================================
 # Functions
 #===============================================================================
 
-get_release_metadata() {
-  local repository_uri="$1"
+die() {
+  local message="$1"
 
+  printf 'Error: %s\n\n' "$message" >&2
+
+  usage 1 1>&2
+}
+
+version() {
+  printf '%s version: %s\n' "$argv0" "$version"
+}
+
+get_release_metadata() {
   printf '%s' $(\
     jq -r ".[0]" \
     <<< $(curl "$repository_uri")  \
@@ -42,8 +72,6 @@ get_release_metadata() {
 }
 
 parse_tag_name() {
-  local release_metadata="$1"
-
   printf '%s' $(\
     jq -r ".tag_name" \
     <<< "$release_metadata"  \
@@ -51,9 +79,6 @@ parse_tag_name() {
 }
 
 parse_download_uri() {
-  local release_metadata="$1"
-  local asset="$2"
-
   printf '%s' $(\
     jq -r ".assets \
     | map(select(.name==\"${asset}\"))[0] \
@@ -62,21 +87,35 @@ parse_download_uri() {
   )
 }
 
+main() {
+  local release_metadata=$(get_release_metadata)
+  local tag_name=$(parse_tag_name)
+  local download_uri=$(parse_download_uri)
+  local executable="${tag_name}_${asset%.tar.gz}"
+  local asset_path="$output_dir/$asset"
+
+  curl -Lo "$asset_path" "$download_uri" \
+  && tar -xvf "$asset_path" -C "$output_dir" \
+  && rm "$asset_path"
+}
+
 #===============================================================================
 # Execution
 #===============================================================================
 
-release_metadata=$(get_release_metadata "$repository_uri")
-tag_name=$(parse_tag_name "$release_metadata")
-download_uri=$(parse_download_uri "$release_metadata" "$asset")
-executable="${tag_name}_${asset%.tar.gz}"
+case "${1:-}" in
+  -h | --help )
+    usage 0
+    ;;
+  -o | --output-dir )
+    shift
+    test $# -eq 0 && die 'Missing argument for option "--output-dir".'
+    output_dir="${1:-output_dir}"
+    ;;
+  -v | --version )
+    version
+    exit 0
+    ;;
+esac
 
-mkdir -p "$executable_dir" \
-  && cd $_ \
-  && curl -Lo "$asset" "$download_uri" \
-  && tar -xvf "$asset" -C . \
-  && rm "$asset" \
-  && mv 'lf' "$executable" \
-  && cd - \
-  && ln -sf "${executable_dir}/${executable}" 'run'
-
+main
