@@ -40,9 +40,10 @@ Usage:  ${argv0} [options] command
 Install script for lf executable.
 
 Options:
-    -h, --help        Show help screen and exit.
-    -v, --version     Show program version and exit.
-    -o, --output-dir  Specify output dir for executable. Defaults to \$PWD.
+    -h, --help                Show help screen and exit.
+    -o, --output-dir <string> Specify output dir for executable.
+                              Defaults to \$PWD.
+    -v, --version             Show program version and exit.
 
 EOF
   exit ${1:-0}
@@ -92,11 +93,11 @@ main() {
   local tag_name=$(parse_tag_name)
   local download_uri=$(parse_download_uri)
   local executable="${tag_name}_${asset%.tar.gz}"
-  local asset_path="$output_dir/$asset"
+  local asset_path="${output_dir}/${asset}"
 
   curl -Lo "$asset_path" "$download_uri" \
-  && tar -xvf "$asset_path" -C "$output_dir" \
-  && rm "$asset_path"
+    && tar -xvf "$asset_path" -C "$output_dir" \
+    && rm "$asset_path"
 }
 
 #===============================================================================
