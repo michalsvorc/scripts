@@ -61,7 +61,7 @@ die() {
   usage 1 1>&2
 }
 
-version() {
+print_version() {
   printf '%s version: %s\n' "$argv0" "$version"
 }
 
@@ -114,7 +114,7 @@ case "${1:-}" in
     output_dir="${1:-output_dir}"
     ;;
   -v | --version )
-    version
+    print_version
     exit 0
     ;;
 esac

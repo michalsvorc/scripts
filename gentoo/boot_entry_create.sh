@@ -32,7 +32,7 @@ die() {
   usage 1 1>&2
 }
 
-version() {
+print_version() {
   printf 'Version: %s\n' "$version"
 }
 
@@ -42,7 +42,7 @@ version() {
 
 [ -z "$version" ] && die 'Provided version is empty.'
 
-version
+print_version
 efibootmgr \
   -c \
   -d /dev/nvme0n1 \
