@@ -21,12 +21,11 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-readonly version='1.0.0'
+readonly version='2.0.0'
 readonly argv0=${0##*/}
-readonly repository_id='gokcehan/lf'
-readonly asset='lf-linux-amd64.tar.gz'
-readonly repository_uri="https://api.github.com/repos/${repository_id}/releases"
+readonly repository_uri="https://api.github.com/repos/gokcehan/lf/releases"
 
+asset='lf-linux-amd64.tar.gz'
 output_dir="${PWD}"
 
 #===============================================================================
@@ -37,13 +36,16 @@ usage() {
   cat <<EOF
 Usage:  ${argv0} [options] command
 
-Install script for lf executable.
+Download script for lf executable.
 
 Options:
     -h, --help                Show help screen and exit.
-    -o, --output-dir <string> Specify output dir for executable.
-                              Defaults to \$PWD.
     -v, --version             Show program version and exit.
+
+    -a, --asset <filename>    Asset filename to download. Defaults to "$asset".
+    -o, --output-dir <dir>    Output directory for downloaded asset.
+                              Defaults to \$PWD.
+    -t, --tag <tag>           Release tag. Defaults to latest.
 
 EOF
   exit ${1:-0}
@@ -90,14 +92,10 @@ parse_download_uri() {
 
 main() {
   local release_metadata=$(get_release_metadata)
-  local tag_name=$(parse_tag_name)
   local download_uri=$(parse_download_uri)
-  local executable="${tag_name}_${asset%.tar.gz}"
   local asset_path="${output_dir}/${asset}"
 
-  curl -Lo "$asset_path" "$download_uri" \
-    && tar -xvf "$asset_path" -C "$output_dir" \
-    && rm "$asset_path"
+  curl -Lo "$asset_path" "$download_uri"
 }
 
 #===============================================================================
@@ -108,10 +106,20 @@ case "${1:-}" in
   -h | --help )
     usage 0
     ;;
+  -a | --asset )
+    shift
+    test $# -eq 0 && die 'Missing argument for option "--asset".'
+    asset="${1:-asset}"
+    ;;
   -o | --output-dir )
     shift
     test $# -eq 0 && die 'Missing argument for option "--output-dir".'
     output_dir="${1:-output_dir}"
+    ;;
+  -t | --tag )
+    shift
+    test $# -eq 0 && die 'Missing argument for option "--tag".'
+    tag_name="${1:-parse_tag_name}"
     ;;
   -v | --version )
     print_version

@@ -25,9 +25,9 @@ readonly version='2.0.0'
 readonly argv0=${0##*/}
 readonly repository_uri="https://api.github.com/repos/neovim/neovim/releases"
 
+asset='nvim-linux64.tar.gz'
 output_dir="${PWD}"
 tag_name='nightly'
-asset='nvim-linux64.tar.gz'
 
 #===============================================================================
 # Usage
@@ -47,6 +47,7 @@ Options:
     -o, --output-dir <dir>    Output directory for downloaded asset.
                               Defaults to \$PWD.
     -t, --tag <tag>           Release tag. Defaults to "$tag_name".
+
 EOF
   exit ${1:-0}
 }
