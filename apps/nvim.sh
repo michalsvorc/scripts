@@ -21,15 +21,13 @@ set -o pipefail     # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-readonly version='1.0.0'
+readonly version='2.0.0'
 readonly argv0=${0##*/}
-readonly repository_id='neovim/neovim'
-readonly app_name='nvim'
-readonly extension='appimage'
-readonly repository_uri="https://api.github.com/repos/${repository_id}/releases"
+readonly repository_uri="https://api.github.com/repos/neovim/neovim/releases"
 
 output_dir="${PWD}"
 tag_name='nightly'
+asset='nvim-linux64.tar.gz'
 
 #===============================================================================
 # Usage
@@ -39,15 +37,16 @@ usage() {
   cat <<EOF
 Usage:  ${argv0} [options] command
 
-Install script for lf executable.
+Download script for neovim executable.
 
 Options:
     -h, --help                Show help screen and exit.
-    -o, --output-dir <string> Specify output dir for executable.
-    -t, --tag <string>        Specify release tag. Defaults to "$tag_name".
-                              Defaults to \$PWD.
     -v, --version             Show program version and exit.
 
+    -a, --asset <filename>    Asset filename to download. Defaults to "$asset".
+    -o, --output-dir <dir>    Output directory for downloaded asset.
+                              Defaults to \$PWD.
+    -t, --tag <tag>           Release tag. Defaults to "$tag_name".
 EOF
   exit ${1:-0}
 }
@@ -78,7 +77,7 @@ get_release_metadata() {
 parse_download_uri() {
   printf '%s' $(\
     jq -r ".assets \
-    | map(select(.name|endswith(\"$extension\")))[0] \
+    | map(select(.name == \"$asset\"))[0] \
     | .browser_download_url" \
     <<< "$release_metadata"  \
   )
@@ -87,16 +86,10 @@ parse_download_uri() {
 main() {
   local release_metadata=$(get_release_metadata)
   local download_uri=$(parse_download_uri)
-  local asset="${tag_name}.${extension}"
   local asset_path="${output_dir}/${asset}"
 
-  curl -Lo "$asset_path" "$download_uri" \
-    && chmod u+x "$asset_path" \
-    && cd "$output_dir" \
-    && "./$asset" --appimage-extract \
-    && cd - \
-    && rm "$asset_path"
-  }
+  curl -Lo "$asset_path" "$download_uri"
+}
 
 #===============================================================================
 # Execution
@@ -105,6 +98,11 @@ main() {
 case "${1:-}" in
   -h | --help )
     usage 0
+    ;;
+  -a | --asset )
+    shift
+    test $# -eq 0 && die 'Missing argument for option "--asset".'
+    asset="${1:-asset}"
     ;;
   -o | --output-dir )
     shift
