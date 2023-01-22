@@ -21,7 +21,7 @@ set -o pipefail     # Don't hide errors within pipes.
 #===============================================================================
 
 readonly version='1.0.0'
-readonly argv0=${0##*/}
+readonly script='gh_release_download.sh'
 
 #===============================================================================
 # Usage
@@ -29,7 +29,7 @@ readonly argv0=${0##*/}
 
 usage() {
   cat <<EOF
-Usage: ${argv0} [options] <repository> <asset>
+Usage: ./${script} [options] <repository> <asset>
 
 Download release asset from GitHub.
 
@@ -45,11 +45,14 @@ Arguments:
 
 
 Examples:
-  Download asset:
-  ${argv0} user/package *_x86_64.tar.gz > asset.tar.gz
+  Download asset by extension:
+  ./${script} user/package '*_x86_64.tar.gz' > asset.tar.gz
+
+  Download asset with dynamic version:
+  ./${script} user/package 'asset-([0-9]{1,}\.)+[0-9]{1,}_x86_64.tar.gz' > asset.tar.gz
 
   Pipe downloaded asset to extraction command:
-  ${argv0} user/package *_x86_64.tar.gz | tar zx
+  ./${script} user/package '*_x86_64.tar.gz' | tar -xz
 EOF
   exit ${1:-0}
 }
@@ -66,7 +69,7 @@ die() {
 }
 
 print_version() {
-  printf '%s version: %s\n' "$argv0" "$version"
+  printf '%s version: %s\n' "$script" "$version"
 }
 
 test_argument() {
