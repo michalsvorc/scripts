@@ -27,17 +27,17 @@ default_input='World'
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options] command
+Usage: ${argv0} [options] command
 
 Basic Unix shell script template.
 
 Options:
-    -h, --help      Show help screen and exit.
-    -v, --version   Show program version and exit.
+  -h, --help      Show help screen and exit.
+  -v, --version   Show program version and exit.
 
 Commands:
-    hello <string>  Print a welcoming message.
-                    Defaults to "Hello ${default_input}".
+  hello <string>  Print a welcoming message.
+                  Defaults to "Hello ${default_input}".
 EOF
   exit ${1:-0}
 }
@@ -50,7 +50,6 @@ die() {
   local message="$1"
 
   printf 'Error: %s\n\n' "$message" >&2
-
   usage 1 1>&2
 }
 

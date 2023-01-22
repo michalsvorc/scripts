@@ -26,13 +26,13 @@ argv0=${0##*/}
 
 usage() {
   cat <<EOF
-Usage:  ${argv0} [options]
+Usage: ${argv0} [options]
 
 Prompt user for [y/N] key press. Print True/False based on user input.
 
 Options:
-    -h, --help      Show help screen and exit.
-    -v, --version   Show program version and exit.
+  -h, --help      Show help screen and exit.
+  -v, --version   Show program version and exit.
 EOF
   exit ${1:-0}
 }
