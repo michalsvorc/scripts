@@ -2,7 +2,7 @@
 #
 # Description: Download assets from a GitHub release.
 #
-# Dependencies: curl, cut, egrep, grep
+# Dependencies: curl, cut, GNU grep
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
@@ -41,15 +41,17 @@ Options:
 
 Arguments:
   repository      Repository id in 'user/package' format.
-  asset           Asset to download, provided as an 'egrep' regexp.
+  asset           Asset to download, provided as an argument
+                  to GNU 'grep --extended-regexp'.
 
 
 Examples:
   Download asset by extension:
   ./${script} user/package '*_x86_64.tar.gz' > asset.tar.gz
 
-  Download asset with dynamic version:
-  ./${script} user/package 'asset-([0-9]{1,}\.)+[0-9]{1,}_x86_64.tar.gz' > asset.tar.gz
+  Download asset with semver identifier in the filename:
+  ./${script} user/package \
+    'asset-([0-9]{1,}\.)+[0-9]{1,}_x86_64.tar.gz' > asset.tar.gz
 
   Pipe downloaded asset to extraction command:
   ./${script} user/package '*_x86_64.tar.gz' | tar -xz
@@ -91,7 +93,7 @@ construct_download_uri() {
   local download_uri=$(curl -s "$release_uri" \
     | grep browser_download_url \
     | cut -d\" -f4 \
-    | egrep "$asset\$")
+    | grep --extended-regexp "$asset")
 
   test -z "$download_uri" \
     && die "Error constructing download URI. No asset for '$asset' found." \
