@@ -34,13 +34,14 @@ Options:
   -v, --version   Show program version and exit.
 
 Commands:
-  code            List available oath accounts and pipes selected code to xclip.
+  code [account]  Send OTP code for oath account to clipboard
+                  Opens fuzzy search when account is not provided.
   start           Start PC/SC Daemon.
-
 
 Examples:
   yubikey start
   yubikey code
+  yubikey code myname
 
 EOF
   exit ${1:-0}
@@ -112,7 +113,8 @@ case "${1:-}" in
     ;;
   code )
     shift
-    account=$(select_oath_account)
+    account="${1:-}"
+    test -z "$account" && account=$(select_oath_account)
     code=$(get_oath_code "$account")
     send_to_clipboard "$code"
     ;;
