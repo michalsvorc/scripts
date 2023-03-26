@@ -25,22 +25,22 @@ version='1.0.0'
 
 usage() {
   cat <<EOF
-Usage: yubikey [options]
-       yubikey [options] [command]
+Usage: yubikey [options] [command]
 
 Shortcuts to Yubikey CLI manager.
-Lists available oath accounts and pipes selected OTP code to xclip.
 
 Options:
   -h, --help      Show help screen and exit.
   -v, --version   Show program version and exit.
 
 Commands:
+  code            List available oath accounts and pipes selected code to xclip.
   start           Start PC/SC Daemon.
+
 
 Examples:
   yubikey start
-  yubikey
+  yubikey code
 
 EOF
   exit ${1:-0}
@@ -69,18 +69,34 @@ restart_pcsc() {
 }
 
 select_oath_account() {
-  ykman oath accounts code \
-    | fzf \
-    | tail -c 7 \
-    | tr -d '\n' \
-    | xclip -i -selection c
+  local account=$(ykman oath accounts list | fzf)
+
+  printf '%s' "$account"
+}
+
+get_oath_code() {
+  local account="$1"
+
+  local code=$(
+    ykman oath accounts code "$account" \
+      | tail -c 7 \
+      | tr -d '\n'
+  )
+
+  printf '%s' "$code"
+}
+
+send_to_clipboard() {
+  local selection="$1"
+
+  printf '%s' "$selection" | xclip -selection c -i
 }
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-test $# -eq 0 && select_oath_account
+test $# -eq 0 && die 'No arguments provided.'
 
 case "${1:-}" in
   -h | --help )
@@ -93,6 +109,12 @@ case "${1:-}" in
   start )
     shift
     restart_pcsc
+    ;;
+  code )
+    shift
+    account=$(select_oath_account)
+    code=$(get_oath_code "$account")
+    send_to_clipboard "$code"
     ;;
   * )
     die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
