@@ -116,7 +116,8 @@ case "${1:-}" in
     account="${1:-}"
     test -z "$account" && account=$(select_oath_account)
     code=$(get_oath_code "$account")
-    send_to_clipboard "$code"
+    send_to_clipboard "$code" \
+      && printf 'Code for %s copied to clipboard.\n' "$account"
     ;;
   * )
     die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
