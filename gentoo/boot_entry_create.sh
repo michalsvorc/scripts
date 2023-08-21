@@ -48,5 +48,5 @@ efibootmgr \
   -d /dev/nvme0n1 \
   -p 1 \
   -L "Gentoo ${version}" \
-  -l "\EFI\Gentoo\vmlinuz-${version}-gentoo.efi" \
+  -l "\EFI\Gentoo\vmlinuz-${version}.efi" \
   && efibootmgr -v

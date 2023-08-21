@@ -2,4 +2,6 @@
 
 readonly kernel_version="$1"
 
-cp "/boot/vmlinuz-${kernel_version}-gentoo" "/boot/EFI/Gentoo/vmlinuz-${kernel_version}-gentoo.efi"
+# TODO check if /boot is mounted
+
+cp "/boot/vmlinuz-${kernel_version}" "/boot/EFI/Gentoo/vmlinuz-${kernel_version}.efi"
