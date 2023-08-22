@@ -34,15 +34,17 @@ readonly script_name=$(basename "${BASH_SOURCE[0]}")
 
 # Functions
 
-# print_usage() - Print Usage
-#
 # This function prints the program usage.
 #
-# Usage:
-#   print_usage
+# Globals:
+#   script_name
+#   NAME
 #
 # Parameters:
 #   None
+#
+# Outputs:
+#   Prints the program usage
 print_usage() {
   cat <<EOF
 Usage: ${script_name} [options]
@@ -61,37 +63,31 @@ Examples:
 EOF
 }
 
-# print_error() - Print error message.
-#
 # This function prints an error message to stderr.
 # It takes a single argument containing the error message.
 #
-# Usage:
-#   print_error "Error message"
-#
 # Parameters:
 #   message: The error message
+#
+# Outputs:
+#   Prints the error message to stderr
 print_error() {
   local message="$1"
 
   printf 'Error: %s\n\n' "${message}" >&2
 }
 
-# print_version() - Print program version.
-#
 # This function prints the program version.
-# 
-# Usage:
-#   print_version
 #
 # Parameters:
 #   None
+#
+# Outputs:
+#   Prints the program version
 print_version() {
   printf '%s version: %s\n' "${script_name}" "${VERSION}"
 }
 
-# setup_signal_traps() - Set up signal traps for cleanup.
-#
 # This function sets up signal traps to handle common termination signals,
 # errors, and script exit. It helps ensure proper cleanup and termination
 # of the script, allowing resources to be released gracefully.
@@ -101,7 +97,12 @@ print_version() {
 #   - SIGTERM: Termination signal
 #   - ERR: Triggered on error
 #   - EXIT: Triggered on script exit
-
+#
+# Parameters:
+#   None
+#
+# Returns:
+#   None
 setup_signal_traps() {
   # Trap SIGINT (Ctrl+C) and SIGTERM signals
   trap 'cleanup; exit 130' INT TERM
@@ -113,29 +114,25 @@ setup_signal_traps() {
   trap 'exit' EXIT
 }
 
-# cleanup() - Cleanup actions.
-#
 # This function cleans up after itself, e.g. by removing temporary files and variables.
-#
-# Usage:
-#   cleanup
 #
 # Parameters:
 #   None
+#
+# Outputs:
+#   Info about cleanup
 cleanup() {
   printf '%s\n' 'Cleanup actions...'
 }
 
-# terminate_execution() - Terminate script execution.
-#
 # This function terminates script execution.
 # It takes a single argument containing the error message.
 #
-# Usage:
-#   terminate_execution "Error message"
-#
 # Parameters:
 #   message: The error message
+#
+# Returns:
+#   1
 terminate_execution() {
   local message="$1"
   local exit_code=1
@@ -146,8 +143,6 @@ terminate_execution() {
   exit "${exit_code}"
 }
 
-# print_name() - Print a personalized greeting message.
-#
 # This function takes a single argument 'name' and prints a greeting message
 # with the provided name.
 #
@@ -156,14 +151,15 @@ terminate_execution() {
 #
 # Parameters:
 #   name: The name to be included in the greeting message.
+#
+# Outputs:
+#   Prints a greeting message
 print_name() {
   local name="$1"
 
   printf 'Hello, %s!\n' "${name}"
 }
 
-# parse_parameters() - Parse command-line arguments.
-#
 # This function parses the command-line arguments passed to the script.
 #
 # Usage:
@@ -171,6 +167,9 @@ print_name() {
 #
 # Parameters:
 #   $@: The command-line arguments
+#
+# Returns:
+#   None
 parse_parameters() {
   while getopts ":vhn:" opt; do
       case $opt in
@@ -193,15 +192,13 @@ parse_parameters() {
   done
 }
 
-# main() - Main function.
-# 
 # This function is the entry point of the script.
 # It parses the command-line arguments and calls the appropriate functions.
 #
-# Usage:
-#   main
-#
 # Parameters:
+#   None
+#
+# Returns:
 #   None
 main() {
   setup_signal_traps

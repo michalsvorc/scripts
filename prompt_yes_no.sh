@@ -3,10 +3,11 @@
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
 
-# Function: prompt_yes_no
 # Prompts the user for a Yes or No answer.
-# Args:
+#
+# Arguments:
 #   $1: The prompt message to display to the user.
+#
 # Returns:
 #   0 if the user answers 'yes'
 #   1 if the user answers 'no'
