@@ -8,7 +8,9 @@
 #   https://google.github.io/styleguide/shell
 #   https://clig.dev
 
+#===============================================================================
 # Shell script execution options
+#===============================================================================
 
 set -o errexit    # Exit if any command exits with a nonzero (error) status
 set -o nounset    # Disallow expansion of unset variables
@@ -22,23 +24,25 @@ if [[ "${DEBUG-}" =~ ^1|true|yes$ ]]; then
     printf '%s\n' 'Debugging mode enabled'
 fi
 
-# Global variables
+#===============================================================================
+# Variables
+#===============================================================================
 
 readonly VERSION='1.0.0'
-NAME='User'
-
-# Computed global variables
+name='User'
 
 readonly script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 readonly script_name=$(basename "${BASH_SOURCE[0]}")
 
+#===============================================================================
 # Functions
+#===============================================================================
 
-# This function prints the program usage.
+# Prints the program usage.
 #
 # Globals:
 #   script_name
-#   NAME
+#   name
 #
 # Parameters:
 #   None
@@ -55,7 +59,7 @@ Options:
   -h            Show help screen and exit.
   -v            Show program version and exit.
   -n <name>     Set name for greeting message.
-                Default: ${NAME}
+                Default: ${name}
 
 Examples:
   ${script_name}
@@ -63,7 +67,7 @@ Examples:
 EOF
 }
 
-# This function prints an error message to stderr.
+# Prints an error message to stderr.
 # It takes a single argument containing the error message.
 #
 # Parameters:
@@ -77,7 +81,7 @@ print_error() {
   printf 'Error: %s\n\n' "${message}" >&2
 }
 
-# This function prints the program version.
+# Prints the program version.
 #
 # Parameters:
 #   None
@@ -88,7 +92,7 @@ print_version() {
   printf '%s version: %s\n' "${script_name}" "${VERSION}"
 }
 
-# This function sets up signal traps to handle common termination signals,
+# Sets up signal traps to handle common termination signals,
 # errors, and script exit. It helps ensure proper cleanup and termination
 # of the script, allowing resources to be released gracefully.
 #
@@ -114,7 +118,7 @@ setup_signal_traps() {
   trap 'exit' EXIT
 }
 
-# This function cleans up after itself, e.g. by removing temporary files and variables.
+# Cleans up after itself, e.g. by removing temporary files and variables.
 #
 # Parameters:
 #   None
@@ -125,7 +129,7 @@ cleanup() {
   printf '%s\n' 'Cleanup actions...'
 }
 
-# This function terminates script execution.
+# Terminates script execution.
 # It takes a single argument containing the error message.
 #
 # Parameters:
@@ -143,7 +147,7 @@ terminate_execution() {
   exit "${exit_code}"
 }
 
-# This function takes a single argument 'name' and prints a greeting message
+# Takes a single argument 'name' and prints a greeting message
 # with the provided name.
 #
 # Usage:
@@ -160,7 +164,7 @@ print_name() {
   printf 'Hello, %s!\n' "${name}"
 }
 
-# This function parses the command-line arguments passed to the script.
+# Parses the command-line arguments passed to the script.
 #
 # Usage:
 #   parse_parameters "$@"
@@ -180,7 +184,7 @@ parse_parameters() {
             print_usage
             ;;
           n)
-            NAME="${OPTARG}"
+            name="${OPTARG}"
             ;;
           \?)
             terminate_execution "Invalid option: -${OPTARG}"
@@ -192,7 +196,7 @@ parse_parameters() {
   done
 }
 
-# This function is the entry point of the script.
+# Entry point of the script.
 # It parses the command-line arguments and calls the appropriate functions.
 #
 # Parameters:
@@ -203,9 +207,11 @@ parse_parameters() {
 main() {
   setup_signal_traps
   parse_parameters "$@"
-  print_name "${NAME}"
+  print_name "${name}"
 }
 
+#===============================================================================
 # Execution
+#===============================================================================
 
 main "$@"
