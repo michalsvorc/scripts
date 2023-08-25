@@ -179,9 +179,11 @@ parse_parameters() {
       case $opt in
           v)
             print_version
+            exit 0
             ;;
           h)
             print_usage
+            exit 0
             ;;
           n)
             name="${OPTARG}"
