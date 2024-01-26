@@ -1,0 +1,166 @@
+#!/bin/bash
+#
+# Migrate data from one DynamoDB table to another existing EMPTY table,
+# using AWS CLI scan and batch-write-item commands.
+# When trying to verify the size of the new table by running
+# `aws dynamodb describe-table` command, keep in mind that the storage size
+# and item count are not updated in real-time.
+#
+# Source: https://blog.cubieserver.de/2020/migrating-data-from-one-dynamodb-table-to-another-one/
+# Dependencies: aws-cli, jq
+
+#===============================================================================
+# Shell script execution options
+#===============================================================================
+
+set -o errexit  # Exit if any command exits with a nonzero (error) status
+set -o nounset  # Disallow expansion of unset variables
+set -o pipefail # Use last non-zero exit code in a pipeline
+set -o errtrace # Ensure the error trap handler is properly inherited
+set -o xtrace   # Trace the execution of the script
+
+#===============================================================================
+# Variables
+#===============================================================================
+
+readonly AWS_PROFILE='aws-profile'
+readonly SOURCE_TABLE='source-table'
+readonly TARGET_TABLE='target-table'
+readonly BATCH_SIZE=7
+readonly TMP_FILE="${HOME}/tmp/inserts.json"
+
+#===============================================================================
+# Functions
+#===============================================================================
+
+# Read data from a DynamoDB table.
+#
+# Documentation:
+#   https://awscli.amazonaws.com/v2/documentation/api/latest/reference/dynamodb/scan.html
+#
+# Parameters:
+#   nextToken: token for batching data
+#   index: current iteration index
+table_read() {
+  local next_token="$1"
+  local index="$2"
+  local starting_token_flag=
+
+  if [ "${index}" != 0 ]; then
+    local starting_token_flag="--starting-token ${next_token}"
+  fi
+
+  aws dynamodb scan \
+    --profile "${AWS_PROFILE}" \
+    --table-name "${SOURCE_TABLE}" \
+    --max-items "${BATCH_SIZE}" \
+    $starting_token_flag
+}
+
+# Write data to a DynamoDB table from a TMP_FILE input.
+#
+# Documentation:
+#   https://awscli.amazonaws.com/v2/documentation/api/latest/reference/dynamodb/batch-write-item.html
+#
+# Parameters:
+#   None
+table_write() {
+  aws dynamodb batch-write-item \
+    --profile "${AWS_PROFILE}" \
+    --request-items "file://${TMP_FILE}"
+}
+
+# Create a JSON file for table write command input.
+#
+# Parameters:
+#   data: table read output
+#
+# Outputs:
+#   JSON file for table write
+create_input_file() {
+  local data="$1"
+
+  echo "${data}" |
+    jq ".Items | {\"${TARGET_TABLE}\": [{\"PutRequest\": { \"Item\": .[]}}]}" \
+      >"${TMP_FILE}"
+}
+
+# Extract the NextToken property from the JSON output.
+#
+# Parameters:
+#   data: table read output
+#
+# Outputs:
+#   NextToken
+extract_next_token() {
+  local data="$1"
+
+  echo "${data}" | jq '.NextToken'
+}
+
+# Return the number of Items property in the JSON output.
+#
+# Parameters:
+#   data: table read output
+#
+# Outputs:
+#   number of items
+get_number_of_items() {
+  local data="$1"
+
+  echo "${data}" | jq '.Items | length'
+}
+
+# Increment global index variable.
+#
+# Parameters:
+#   None
+#
+# Outputs:
+#   None
+increment_index() {
+  ((index += 1))
+}
+
+# Return message about number of processed items.
+#
+# Parameters:
+#   None
+#
+# Outputs:
+#   number of processed items message
+print_processed_items_message() {
+  printf '\nNumber of processed items: %s\n' "${total_number_of_items}"
+}
+
+#===============================================================================
+# Exectution
+#===============================================================================
+
+mkdir -p "$(dirname "${TMP_FILE}")"
+
+index=0
+current_number_of_items=
+total_number_of_items=0
+next_token=
+
+while [ "${next_token}" != "null" ]; do
+  printf 'Iteration: %s\n' "${index}"
+  DATA=$(table_read "${next_token}" "${index}")
+  current_number_of_items=$(get_number_of_items "${DATA}")
+  ((total_number_of_items += current_number_of_items))
+
+  if [ "${current_number_of_items}" == 0 ]; then
+    printf 'No items found. Finished operation\n'
+    print_processed_items_message
+    exit
+  fi
+
+  increment_index
+  create_input_file "${DATA}"
+  # table_write
+  next_token=$(extract_next_token "${DATA}")
+done
+
+printf 'Next token reached %s value. Finished migration.\n' "${next_token}"
+print_processed_items_message
