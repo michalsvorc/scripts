@@ -26,7 +26,7 @@ def print_age(age):
     print(f"Age: {age}")
 
 
-def parse_parameters():
+def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Basic Python script template. Prints a greeting message."
     )
@@ -35,13 +35,13 @@ def parse_parameters():
         "--version",
         action="version",
         version=VERSION,
-        help="Show program version and exit.",
+        help="show program version and exit",
     )
     parser.add_argument(
         "name",
         metavar="name",
         type=str,
-        help="Specify a name for greeting message.",
+        help="specify a name for the greeting message",
     )
 
     parser.add_argument(
@@ -50,7 +50,7 @@ def parse_parameters():
         metavar="age",
         type=int,
         default=DEFAULT_AGE,
-        help=f"Specify a number for age (default: {DEFAULT_AGE})",
+        help=f"specify a number for age (default: {DEFAULT_AGE})",
     )
 
     args = parser.parse_args()
@@ -58,7 +58,7 @@ def parse_parameters():
 
 
 def main():
-    args = parse_parameters()
+    args = parse_arguments()
     print_name(args.name)
     print_age(args.age)
 
