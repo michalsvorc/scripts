@@ -1,27 +1,25 @@
 #!/usr/bin/env bash
 #
-# Shell script template with simple option parsing using getopts.
+# Shell script template.
 #
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Guidelines:   
-#   https://google.github.io/styleguide/shell
-#   https://clig.dev
+# Guidelines: https://google.github.io/styleguide/shell
 
 #===============================================================================
 # Shell script execution options
 #===============================================================================
 
-set -o errexit    # Exit if any command exits with a nonzero (error) status
-set -o nounset    # Disallow expansion of unset variables
-set -o pipefail   # Use last non-zero exit code in a pipeline
-set -o errtrace   # Ensure the error trap handler is properly inherited
+set -o errexit  # Exit if any command exits with a nonzero (error) status
+set -o nounset  # Disallow expansion of unset variables
+set -o pipefail # Use last non-zero exit code in a pipeline
+set -o errtrace # Ensure the error trap handler is properly inherited
 
-# Enable debugging if the DEBUG environment variable is set to positive value
+# Enable shell script debugging mode when the DEBUG environment variable is set
 
-if [[ "${DEBUG-}" =~ ^1|true|yes$ ]]; then
-    set -o xtrace # Trace the execution of the script
-    printf '%s\n' 'Debugging mode enabled'
+if [[ ${DEBUG-} =~ ^1|[Tt]rue|[Yy]yes$ ]]; then
+  set -o xtrace
+  printf '%s\n' 'Shell script debugging mode enabled.'
 fi
 
 #===============================================================================
@@ -29,10 +27,12 @@ fi
 #===============================================================================
 
 readonly VERSION='1.0.0'
-name='User'
+readonly DEFAULT_AGE=42
 
-readonly script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-readonly script_name=$(basename "${BASH_SOURCE[0]}")
+# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+# readonly script_dir
+script_name=$(basename "${BASH_SOURCE[0]}")
+readonly script_name
 
 #===============================================================================
 # Functions
@@ -44,172 +44,153 @@ readonly script_name=$(basename "${BASH_SOURCE[0]}")
 #   script_name
 #   name
 #
-# Parameters:
+# Arguments:
 #   None
 #
 # Outputs:
-#   Prints the program usage
+#   Prints the program usage.
 print_usage() {
   cat <<EOF
-Usage: ${script_name} [options]
+Usage: ${script_name} [...options] name
 
-Basic Unix shell script template. Prints a greeting message.
+Basic BASH script template. Prints a greeting message.
+
+Positional arguments:
+  name          specify a name for the greeting message
 
 Options:
-  -h            Show help screen and exit.
-  -v            Show program version and exit.
-  -n <name>     Set name for greeting message.
-                Default: ${name}
-
-Examples:
-  ${script_name}
-  ${script_name} -n Alice
+  -h            show help screen and exit
+  -v            show program version and exit
+  -a            set age (default: ${DEFAULT_AGE})
 EOF
 }
 
-# Prints an error message to stderr.
-# It takes a single argument containing the error message.
+# Prints an error message.
 #
-# Parameters:
-#   message: The error message
+# Arguments:
+#   message: The error message.
 #
 # Outputs:
-#   Prints the error message to stderr
+#   Writes the error message to stderr.
 print_error() {
-  local message="$1"
+  local -r message="$1"
 
   printf 'Error: %s\n\n' "${message}" >&2
 }
 
 # Prints the program version.
 #
-# Parameters:
+# Globals:
+#   VERSION
+#
+# Arguments:
 #   None
 #
 # Outputs:
-#   Prints the program version
+#   Writes the program version to stdout.
 print_version() {
   printf '%s version: %s\n' "${script_name}" "${VERSION}"
 }
 
-# Sets up signal traps to handle common termination signals,
-# errors, and script exit. It helps ensure proper cleanup and termination
-# of the script, allowing resources to be released gracefully.
-#
-# Trapped Signals:
-#   - SIGINT: Interrupt signal (Ctrl+C)
-#   - SIGTERM: Termination signal
-#   - ERR: Triggered on error
-#   - EXIT: Triggered on script exit
-#
-# Parameters:
-#   None
-#
-# Returns:
-#   None
-setup_signal_traps() {
-  # Trap SIGINT (Ctrl+C) and SIGTERM signals
-  trap 'cleanup; exit 130' INT TERM
-
-  # Trap ERR signal
-  trap 'cleanup; exit 1' ERR
-
-  # Trap EXIT signal
-  trap 'exit' EXIT
-}
-
-# Cleans up after itself, e.g. by removing temporary files and variables.
-#
-# Parameters:
-#   None
-#
-# Outputs:
-#   Info about cleanup
-cleanup() {
-  printf '%s\n' 'Cleanup actions...'
-}
-
 # Terminates script execution.
-# It takes a single argument containing the error message.
 #
-# Parameters:
-#   message: The error message
+# Arguments:
+#   message: The error message.
 #
 # Returns:
-#   1
+#   Exits with a nonzero (error) status.
 terminate_execution() {
-  local message="$1"
-  local exit_code=1
+  local -r message="$1"
+  local -r EXIT_CODE=1
 
   print_error "${message}"
   print_usage
-  cleanup
-  exit "${exit_code}"
+  exit "${EXIT_CODE}"
 }
 
 # Takes a single argument 'name' and prints a greeting message
 # with the provided name.
 #
-# Usage:
-#   print_name "John"
-#
-# Parameters:
+# Arguments:
 #   name: The name to be included in the greeting message.
 #
 # Outputs:
-#   Prints a greeting message
+#   Prints a greeting message to stdout.
 print_name() {
-  local name="$1"
+  local -r name="$1"
 
   printf 'Hello, %s!\n' "${name}"
+}
+
+# Takes a single argument 'age' and prints a message
+# with the provided age.
+#
+# Arguments:
+#   age: The age to be included in the message.
+#
+# Outputs:
+#   Prints a greeting message to stdout.
+print_age() {
+  local -r age="$1"
+
+  printf 'Age: %s\n' "${age}"
 }
 
 # Parses the command-line arguments passed to the script.
 #
 # Usage:
-#   parse_parameters "$@"
+#   parse_arguments "$@"
 #
-# Parameters:
-#   $@: The command-line arguments
+# Arguments:
+#   $@: The command-line arguments.
 #
 # Returns:
 #   None
-parse_parameters() {
-  while getopts ":vhn:" opt; do
-      case $opt in
-          v)
-            print_version
-            exit 0
-            ;;
-          h)
-            print_usage
-            exit 0
-            ;;
-          n)
-            name="${OPTARG}"
-            ;;
-          \?)
-            terminate_execution "Invalid option: -${OPTARG}"
-            ;;
-          :)
-            terminate_execution "Option -${OPTARG} requires an argument."
-            ;;
-      esac
+parse_arguments() {
+  # Default arguments
+  age=${DEFAULT_AGE}
+
+  # Optional arguments
+  while getopts ":vha:" opt; do
+    case $opt in
+    v)
+      print_version
+      exit 0
+      ;;
+    h)
+      print_usage
+      exit 0
+      ;;
+    a)
+      age="${OPTARG}"
+      ;;
+    \?)
+      terminate_execution "Invalid option: -${OPTARG}"
+      ;;
+    :)
+      terminate_execution "Option -${OPTARG} requires an argument."
+      ;;
+    esac
   done
+  shift $((OPTIND - 1))
+
+  # Positional arguments
+  test $# -eq 0 && terminate_execution 'No positional arguments provided.'
+  name="${1:-}"
 }
 
 # Entry point of the script.
 # It parses the command-line arguments and calls the appropriate functions.
 #
-# Parameters:
+# Arguments:
 #   None
 #
 # Returns:
 #   None
 main() {
-  setup_signal_traps
-  parse_parameters "$@"
+  parse_arguments "$@"
   print_name "${name}"
+  print_age "${age}"
 }
 
 #===============================================================================
