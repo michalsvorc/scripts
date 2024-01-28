@@ -1,6 +1,6 @@
-# Unix shell scripts
+# Scripts
 
-Collection of Unix shell scripts.
+My collection of scripts.
 
 ## System
 
