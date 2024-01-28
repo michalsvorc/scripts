@@ -8,24 +8,6 @@ VERSION = "%(prog)s 1.0.0"
 DEFAULT_AGE = 42
 
 
-def print_error(message):
-    sys.stderr.write(f"Error: {message}\n\n")
-
-
-def terminate_execution(message):
-    exit_code = 1
-    print_error(message)
-    sys.exit(exit_code)
-
-
-def print_name(name):
-    print(f"Hello, {name}!")
-
-
-def print_age(age):
-    print(f"Age: {age}")
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Basic Python script template. Prints a greeting message."
@@ -43,7 +25,6 @@ def parse_arguments():
         type=str,
         help="specify a name for the greeting message",
     )
-
     parser.add_argument(
         "-a",
         "--age",
@@ -52,9 +33,26 @@ def parse_arguments():
         default=DEFAULT_AGE,
         help=f"specify a number for age (default: {DEFAULT_AGE})",
     )
-
     args = parser.parse_args()
     return args
+
+
+def print_error(message: str) -> None:
+    sys.stderr.write(f"Error: {message}\n\n")
+
+
+def terminate_execution(message: str) -> None:
+    exit_code: int = 1
+    print_error(message)
+    sys.exit(exit_code)
+
+
+def print_name(name: str) -> None:
+    print(f"Hello, {name}!")
+
+
+def print_age(age: int) -> None:
+    print(f"Age: {age}")
 
 
 def main():
@@ -65,4 +63,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
