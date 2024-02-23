@@ -10,12 +10,12 @@
 # Shell script execution options
 #===============================================================================
 
-set -o errexit  # Exit if any command exits with a nonzero (error) status
-set -o nounset  # Disallow expansion of unset variables
-set -o pipefail # Use last non-zero exit code in a pipeline
-set -o errtrace # Ensure the error trap handler is properly inherited
+set -o errexit  # Exit if any command exits with a nonzero (error) status.
+set -o nounset  # Disallow expansion of unset variables.
+set -o pipefail # Use last non-zero exit code in a pipeline.
+set -o errtrace # Ensure the error trap handler is properly inherited.
 
-# Enable shell script debugging mode when the DEBUG environment variable is set
+# Enable shell script debugging mode when the DEBUG environment variable is set.
 
 if [[ ${DEBUG-} =~ ^1|[Tt]rue|[Yy]es$ ]]; then
   set -o xtrace
@@ -26,8 +26,8 @@ fi
 # Variables
 #===============================================================================
 
-readonly VERSION='1.0.2'
-readonly DEFAULT_AGE=42
+readonly VERSION='1.1.0'
+AGE_DEFAULT=42
 
 script_name=$(basename "${BASH_SOURCE[0]}")
 readonly script_name
@@ -36,20 +36,9 @@ readonly script_name
 # Usage
 #===============================================================================
 
-# Prints the program usage.
-#
-# Globals:
-#   script_name
-#   name
-#
-# Arguments:
-#   None
-#
-# Outputs:
-#   Prints the program usage.
 print_usage() {
   cat <<EOF
-Usage: ${script_name} [...options] name
+Usage: ${script_name} [-h] [-v] [-a age] name
 
 Basic BASH script template. Prints a greeting message.
 
@@ -59,7 +48,7 @@ Positional arguments:
 Options:
   -h            show help screen and exit
   -v            show program version and exit
-  -a            set age (default: ${DEFAULT_AGE})
+  -a age        specify a number for age (default: ${AGE_DEFAULT})
 EOF
 }
 
@@ -67,39 +56,31 @@ EOF
 # Functions
 #===============================================================================
 
+#===============================================================================
 # Entry point of the script.
-# It parses the command-line arguments and calls the appropriate functions.
-#
+# Globals:
+#   AGE
+#   NAME
 # Arguments:
 #   None
-#
-# Returns:
-#   None
+#===============================================================================
 main() {
   parse_arguments "$@"
-  print_name "${name}"
-  print_age "${age}"
+  print_name "${NAME}"
+  print_age "${AGE}"
 }
 
+#===============================================================================
 # Parses the command-line arguments passed to the script.
-#
-# Usage:
-#   parse_arguments "$@"
-#
-# Arguments:
-#   $@: The command-line arguments.
-#
-# Returns:
-#   None
+#===============================================================================
 parse_arguments() {
-  # Default arguments
-  age=${DEFAULT_AGE}
+  # Options
+  AGE=$AGE_DEFAULT
 
-  # Optional arguments
   while getopts ":vha:" opt; do
     case $opt in
     v)
-      print_version VERSION
+      print_version
       exit 0
       ;;
     h)
@@ -107,54 +88,63 @@ parse_arguments() {
       exit 0
       ;;
     a)
-      age="${OPTARG}"
+      AGE="${OPTARG}"
       ;;
     \?)
-      terminate_execution "Invalid option: -${OPTARG}"
+      terminate "Invalid option: -${OPTARG}"
       ;;
     :)
-      terminate_execution "Option -${OPTARG} requires an argument."
+      terminate "Option -${OPTARG} requires an argument."
       ;;
     esac
   done
+
   shift $((OPTIND - 1))
 
   # Positional arguments
-  test $# -eq 0 && terminate_execution 'No positional arguments provided.'
-  name="${1:-}"
+  test_positional_arguments "$@"
+  NAME="${1:-}"
+
+  # Mark globals readonly
+  readonly AGE
+  readonly NAME
 }
 
+#===============================================================================
 # Prints an error message.
-#
 # Arguments:
 #   message: The error message.
-#
 # Outputs:
 #   Writes the error message to stderr.
+#===============================================================================
 print_error() {
   local -r message="$1"
   printf 'Error: %s\n\n' "${message}" >&2
 }
 
+#===============================================================================
 # Prints the program version.
-#
+# Globals:
+#   VERSION
 # Arguments:
-#   VERSION: The program version.
-#
+#   None
 # Outputs:
 #   Writes the program version to stdout.
+#===============================================================================
 print_version() {
   printf '%s version: %s\n' "${script_name}" "${VERSION}"
 }
 
+#===============================================================================
 # Terminates script execution.
-#
 # Arguments:
 #   message: The error message.
-#
+# Outputs:
+#   Writes the error message stderr.
 # Returns:
 #   Exits with a nonzero (error) status.
-terminate_execution() {
+#===============================================================================
+terminate() {
   local -r message="$1"
   local -r EXIT_CODE=1
 
@@ -163,27 +153,43 @@ terminate_execution() {
   exit "${EXIT_CODE}"
 }
 
-# Takes a single argument 'name' and prints a greeting message
+#===============================================================================
+# Tests positional arguments
 # with the provided name.
-#
 # Arguments:
 #   name: The name to be included in the greeting message.
-#
 # Outputs:
 #   Prints a greeting message to stdout.
+#===============================================================================
+test_positional_arguments() {
+  local -r arg_count="$#"
+
+  if [ "$arg_count" -eq 0 ]; then
+    terminate 'No positional arguments provided.'
+  fi
+}
+
+#===============================================================================
+# Takes a single argument 'name' and prints a greeting message
+# with the provided name.
+# Arguments:
+#   name: The name to be included in the greeting message.
+# Outputs:
+#   Prints a greeting message to stdout.
+#===============================================================================
 print_name() {
   local -r name="$1"
   printf 'Hello, %s!\n' "${name}"
 }
 
+#===============================================================================
 # Takes a single argument 'age' and prints a message
 # with the provided age.
-#
 # Arguments:
 #   age: The age to be included in the message.
-#
 # Outputs:
 #   Prints a greeting message to stdout.
+#===============================================================================
 print_age() {
   local -r age="$1"
   printf 'Age: %s\n' "${age}"
@@ -199,7 +205,7 @@ main "$@"
 # Snippets
 #===============================================================================
 #
-# Directory containing the script file
+# Directory containing the script file.
 #
 # script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 # readonly script_dir
