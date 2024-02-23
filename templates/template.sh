@@ -26,16 +26,14 @@ fi
 # Variables
 #===============================================================================
 
-readonly VERSION='1.0.1'
+readonly VERSION='1.0.2'
 readonly DEFAULT_AGE=42
 
-# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
-# readonly script_dir
 script_name=$(basename "${BASH_SOURCE[0]}")
 readonly script_name
 
 #===============================================================================
-# Functions
+# Usage
 #===============================================================================
 
 # Prints the program usage.
@@ -65,6 +63,67 @@ Options:
 EOF
 }
 
+#===============================================================================
+# Functions
+#===============================================================================
+
+# Entry point of the script.
+# It parses the command-line arguments and calls the appropriate functions.
+#
+# Arguments:
+#   None
+#
+# Returns:
+#   None
+main() {
+  parse_arguments "$@"
+  print_name "${name}"
+  print_age "${age}"
+}
+
+# Parses the command-line arguments passed to the script.
+#
+# Usage:
+#   parse_arguments "$@"
+#
+# Arguments:
+#   $@: The command-line arguments.
+#
+# Returns:
+#   None
+parse_arguments() {
+  # Default arguments
+  age=${DEFAULT_AGE}
+
+  # Optional arguments
+  while getopts ":vha:" opt; do
+    case $opt in
+    v)
+      print_version VERSION
+      exit 0
+      ;;
+    h)
+      print_usage
+      exit 0
+      ;;
+    a)
+      age="${OPTARG}"
+      ;;
+    \?)
+      terminate_execution "Invalid option: -${OPTARG}"
+      ;;
+    :)
+      terminate_execution "Option -${OPTARG} requires an argument."
+      ;;
+    esac
+  done
+  shift $((OPTIND - 1))
+
+  # Positional arguments
+  test $# -eq 0 && terminate_execution 'No positional arguments provided.'
+  name="${1:-}"
+}
+
 # Prints an error message.
 #
 # Arguments:
@@ -74,17 +133,13 @@ EOF
 #   Writes the error message to stderr.
 print_error() {
   local -r message="$1"
-
   printf 'Error: %s\n\n' "${message}" >&2
 }
 
 # Prints the program version.
 #
-# Globals:
-#   VERSION
-#
 # Arguments:
-#   None
+#   VERSION: The program version.
 #
 # Outputs:
 #   Writes the program version to stdout.
@@ -118,7 +173,6 @@ terminate_execution() {
 #   Prints a greeting message to stdout.
 print_name() {
   local -r name="$1"
-
   printf 'Hello, %s!\n' "${name}"
 }
 
@@ -132,65 +186,7 @@ print_name() {
 #   Prints a greeting message to stdout.
 print_age() {
   local -r age="$1"
-
   printf 'Age: %s\n' "${age}"
-}
-
-# Parses the command-line arguments passed to the script.
-#
-# Usage:
-#   parse_arguments "$@"
-#
-# Arguments:
-#   $@: The command-line arguments.
-#
-# Returns:
-#   None
-parse_arguments() {
-  # Default arguments
-  age=${DEFAULT_AGE}
-
-  # Optional arguments
-  while getopts ":vha:" opt; do
-    case $opt in
-    v)
-      print_version
-      exit 0
-      ;;
-    h)
-      print_usage
-      exit 0
-      ;;
-    a)
-      age="${OPTARG}"
-      ;;
-    \?)
-      terminate_execution "Invalid option: -${OPTARG}"
-      ;;
-    :)
-      terminate_execution "Option -${OPTARG} requires an argument."
-      ;;
-    esac
-  done
-  shift $((OPTIND - 1))
-
-  # Positional arguments
-  test $# -eq 0 && terminate_execution 'No positional arguments provided.'
-  name="${1:-}"
-}
-
-# Entry point of the script.
-# It parses the command-line arguments and calls the appropriate functions.
-#
-# Arguments:
-#   None
-#
-# Returns:
-#   None
-main() {
-  parse_arguments "$@"
-  print_name "${name}"
-  print_age "${age}"
 }
 
 #===============================================================================
@@ -198,3 +194,12 @@ main() {
 #===============================================================================
 
 main "$@"
+
+#===============================================================================
+# Snippets
+#===============================================================================
+#
+# Directory containing the script file
+#
+# script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+# readonly script_dir
