@@ -17,7 +17,7 @@ set -o errtrace # Ensure the error trap handler is properly inherited
 
 # Enable shell script debugging mode when the DEBUG environment variable is set
 
-if [[ ${DEBUG-} =~ ^1|[Tt]rue|[Yy]yes$ ]]; then
+if [[ ${DEBUG-} =~ ^1|[Tt]rue|[Yy]es$ ]]; then
   set -o xtrace
   printf '%s\n' 'Shell script debugging mode enabled.'
 fi
@@ -26,7 +26,7 @@ fi
 # Variables
 #===============================================================================
 
-readonly VERSION='1.0.0'
+readonly VERSION='1.0.1'
 readonly DEFAULT_AGE=42
 
 # script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
