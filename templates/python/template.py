@@ -15,6 +15,13 @@ VERSION = "1.0.0"
 AGE_DEFAULT = 42
 
 
+def main():
+    enable_debug_mode()
+    args = parse_arguments()
+    print_name(args.name)
+    print_age(args.age)
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Basic Python script template. Prints a greeting message."
@@ -51,10 +58,6 @@ def print_age(age: int) -> None:
     print(f"Age: {age}")
 
 
-def main():
-    args = parse_arguments()
-    print_name(args.name)
-    print_age(args.age)
 
 
 if __name__ == "__main__":
