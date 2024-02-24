@@ -10,7 +10,7 @@ import argparse
 import sys
 
 
-VERSION = "%(prog)s 1.0.0"
+VERSION = "1.0.0"
 DEFAULT_AGE = 42
 
 
@@ -22,7 +22,7 @@ def parse_arguments():
         "-v",
         "--version",
         action="version",
-        version=VERSION,
+        version=f"%(prog)s {VERSION}",
         help="show program version and exit",
     )
     parser.add_argument(
