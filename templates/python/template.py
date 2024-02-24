@@ -7,9 +7,9 @@
 # Guidelines: https://google.github.io/styleguide/pyguide
 
 import argparse
-import sys
-
 import logging
+import os
+import pdb
 
 VERSION = "1.0.0"
 AGE_DEFAULT = 42
@@ -58,6 +58,12 @@ def print_age(age: int) -> None:
     print(f"Age: {age}")
 
 
+def enable_debug_mode():
+    debug_env = os.environ.get("DEBUG", "").lower()
+    if debug_env in ["1", "true", "yes"]:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.debug("Debug mode enabled.")
+        pdb.set_trace()
 
 
 if __name__ == "__main__":
