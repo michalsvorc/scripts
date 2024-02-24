@@ -95,7 +95,7 @@ def parse_arguments():
     return args
 
 
-def get_source_and_target(args):
+def get_source_and_target(args) -> tuple[str, str]:
     if args.command == Command.UP.value:
         return args.local_path, args.remote_path
     elif args.command == Command.DOWN.value:
@@ -105,17 +105,17 @@ def get_source_and_target(args):
 
 
 def sso_login(profile: str) -> None:
-    context = "Logging in to AWS SSO"
+    context = "Logging in to AWS SSO..."
     print(f"{context}. Profile: {profile}")
     command = ["aws", "sso", "login", "--profile", profile]
     result = subprocess.run(command)
 
     if result.returncode != 0:
-        logging.error(f"{context}. Command failed with exit code {result.returncode}")
+        logging.error(f"{context}. Command failed with exit code: {result.returncode}")
         sys.exit(1)
 
 
-def bucket_sync(source: str, target: str, args):
+def bucket_sync(source: str, target: str, args) -> None:
     command = [
         "aws",
         "s3",
@@ -133,7 +133,7 @@ def bucket_sync(source: str, target: str, args):
     subprocess.run(command)
 
 
-def prompt_user(question="Are you sure?"):
+def prompt_user(question="Are you sure?") -> bool:
     positive_answer = "y"
     negative_answer = "N"
     print(f"{question} [{positive_answer}/{negative_answer}] ")
