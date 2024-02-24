@@ -1,0 +1,172 @@
+#!/usr/bin/env python3
+#
+# Synchronize files between local and S3 bucket.
+#
+# Author: Michal Svorc <dev@michalsvorc.com>
+# License: MIT license (https://opensource.org/licenses/MIT)
+# Guidelines: https://google.github.io/styleguide/pyguide
+
+
+import argparse
+import logging
+import os
+import pdb
+import subprocess
+import sys
+from enum import Enum
+
+VERSION = "1.0.0"
+PROFILE_DEFAULT = "default"
+REMOTE_PATH_DEFAULT = "s3://"
+LOCAL_PATH_DEFAULT = os.getcwd()
+
+
+class Command(Enum):
+    UP = "up"
+    DOWN = "down"
+
+
+def main():
+    enable_debug_mode()
+    args = parse_arguments()
+
+    sso_login(args.profile)
+
+    try:
+        source, target = get_source_and_target(args)
+        print(f"Source: {source}\nTarget: {target}\n")
+    except InvalidCommandError as e:
+        logging.error(f"Caught exception: {e.message}.")
+        sys.exit(1)
+
+    # Preview the sync
+    bucket_sync(source, target, {**vars(args), "dry_run": True})
+
+    if not prompt_user("Confirm this sync?"):
+        sys.exit(0)
+
+    bucket_sync(source, target, vars(args))
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Synchronize files between local and S3 bucket."
+    )
+    parser.add_argument(
+        "command",
+        choices=[Command.UP.value, Command.DOWN.value],
+        help=f"Specify sync direction. {Command.UP.value}: to remote. {Command.DOWN.value}: to local.",
+    )
+    parser.add_argument(
+        "-p",
+        "--profile",
+        metavar="profile",
+        type=str,
+        default=PROFILE_DEFAULT,
+        help=f"AWS profile (default: {PROFILE_DEFAULT})",
+    )
+    parser.add_argument(
+        "-r",
+        "--remote-path",
+        metavar="path",
+        default=REMOTE_PATH_DEFAULT,
+        help=f"Remote path (default: {REMOTE_PATH_DEFAULT})",
+    )
+    parser.add_argument(
+        "-l",
+        "--local-path",
+        metavar="path",
+        default=LOCAL_PATH_DEFAULT,
+        help=f"Local path (default: {LOCAL_PATH_DEFAULT})",
+    )
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {VERSION}",
+        help="show program version and exit",
+    )
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help="perform a trial run with no changes made",
+    )
+    parser.add_argument(
+        "-d",
+        "--delete",
+        action="store_true",
+        help="delete files that exist in the target but not in the source",
+    )
+    args = parser.parse_args()
+    return args
+
+
+def get_source_and_target(args):
+    if args.command == Command.UP.value:
+        return args.local_path, args.remote_path
+    elif args.command == Command.DOWN.value:
+        return args.remote_path, args.local_path
+    else:
+        raise InvalidCommandError()
+
+
+def sso_login(profile: str) -> None:
+    context = "Logging in to AWS SSO"
+    print(f"{context}. Profile: {profile}")
+    command = ["aws", "sso", "login", "--profile", profile]
+    result = subprocess.run(command)
+
+    if result.returncode != 0:
+        logging.error(f"{context}. Command failed with exit code {result.returncode}")
+        sys.exit(1)
+
+
+def bucket_sync(source: str, target: str, args):
+    command = [
+        "aws",
+        "s3",
+        "sync",
+        source,
+        target,
+        "--profile",
+        args["profile"],
+    ]
+
+    if args["dry_run"]:
+        print("Performing a trial run with no changes made.")
+        command.append("--dryrun")
+
+    if args["delete"]:
+        print("Delete mode enabled.")
+        command.append("--delete")
+
+    subprocess.run(command)
+
+
+def prompt_user(question="Are you sure?"):
+    positive_answer = "y"
+    negative_answer = "N"
+    print(f"{question} [{positive_answer}/{negative_answer}] ")
+
+    answer = input().strip().lower()
+    return answer == positive_answer
+
+
+def enable_debug_mode():
+    debug_env = os.environ.get("DEBUG", "").lower()
+    if debug_env in ["1", "true", "yes"]:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.debug("Debug mode enabled.")
+        pdb.set_trace()
+
+
+class InvalidCommandError(Exception):
+    def __init__(self, message="Invalid command. Please enter 'up' or 'down'."):
+        self.message = message
+        super().__init__(message)
+        logging.error(f"Raised exception: {message}")
+
+
+if __name__ == "__main__":
+    main()
