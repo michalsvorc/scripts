@@ -9,6 +9,7 @@
 import argparse
 import sys
 
+import logging
 
 VERSION = "1.0.0"
 AGE_DEFAULT = 42
@@ -40,10 +41,6 @@ def parse_arguments():
         help=f"specify a number for age (default: {AGE_DEFAULT})",
     )
     return parser.parse_args()
-
-
-def print_error(message: str) -> None:
-    sys.stderr.write(f"Error: {message}\n\n")
 
 
 def print_name(name: str) -> None:
