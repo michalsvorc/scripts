@@ -39,12 +39,12 @@ def main():
         sys.exit(1)
 
     # Preview the sync
-    bucket_sync(source, target, {**vars(args), "dry_run": True})
+    synchronize(source, target, {**vars(args), "dry_run": True})
 
     if not prompt_user("Confirm this sync?"):
         sys.exit(0)
 
-    bucket_sync(source, target, vars(args))
+    synchronize(source, target, vars(args))
 
 
 def parse_arguments():
@@ -115,7 +115,7 @@ def sso_login(profile: str) -> None:
         sys.exit(1)
 
 
-def bucket_sync(source: str, target: str, args) -> None:
+def synchronize(source: str, target: str, args) -> None:
     command = [
         "aws",
         "s3",
