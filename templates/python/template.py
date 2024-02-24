@@ -46,12 +46,6 @@ def print_error(message: str) -> None:
     sys.stderr.write(f"Error: {message}\n\n")
 
 
-def terminate(message: str) -> None:
-    exit_code = 1
-    print_error(message)
-    sys.exit(exit_code)
-
-
 def print_name(name: str) -> None:
     print(f"Hello, {name}!")
 
