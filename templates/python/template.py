@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+#
+# Python script template.
+#
+# Author: Michal Svorc <dev@michalsvorc.com>
+# License: MIT license (https://opensource.org/licenses/MIT)
+# Guidelines: https://google.github.io/styleguide/pyguide
 
 import argparse
 import sys
