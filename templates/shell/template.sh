@@ -115,6 +115,49 @@ parse_arguments() {
 }
 
 #===============================================================================
+# Tests positional arguments with the provided name.
+#
+# Arguments:
+#   name: The name to be included in the greeting message.
+# Outputs:
+#   Prints a greeting message to stdout.
+#===============================================================================
+test_positional_arguments() {
+  local -r arg_count="$#"
+
+  if [ "$arg_count" -eq 0 ]; then
+    terminate 'No positional arguments provided.'
+  fi
+}
+
+#===============================================================================
+# Takes a single argument 'name' and prints a greeting message
+# with the provided name.
+#
+# Arguments:
+#   name: The name to be included in the greeting message.
+# Outputs:
+#   Prints a greeting message to stdout.
+#===============================================================================
+print_name() {
+  local -r name="$1"
+  printf 'Hello, %s!\n' "${name}"
+}
+
+#===============================================================================
+# Takes a single argument 'age' and prints a message with the provided age.
+#
+# Arguments:
+#   age: The age to be included in the message.
+# Outputs:
+#   Prints a greeting message to stdout.
+#===============================================================================
+print_age() {
+  local -r age="$1"
+  printf 'Age: %s\n' "${age}"
+}
+
+#===============================================================================
 # Prints an error message.
 #
 # Arguments:
@@ -158,49 +201,6 @@ terminate() {
   print_error "${message}"
   print_usage
   exit "${EXIT_CODE}"
-}
-
-#===============================================================================
-# Tests positional arguments with the provided name.
-#
-# Arguments:
-#   name: The name to be included in the greeting message.
-# Outputs:
-#   Prints a greeting message to stdout.
-#===============================================================================
-test_positional_arguments() {
-  local -r arg_count="$#"
-
-  if [ "$arg_count" -eq 0 ]; then
-    terminate 'No positional arguments provided.'
-  fi
-}
-
-#===============================================================================
-# Takes a single argument 'name' and prints a greeting message
-# with the provided name.
-#
-# Arguments:
-#   name: The name to be included in the greeting message.
-# Outputs:
-#   Prints a greeting message to stdout.
-#===============================================================================
-print_name() {
-  local -r name="$1"
-  printf 'Hello, %s!\n' "${name}"
-}
-
-#===============================================================================
-# Takes a single argument 'age' and prints a message with the provided age.
-#
-# Arguments:
-#   age: The age to be included in the message.
-# Outputs:
-#   Prints a greeting message to stdout.
-#===============================================================================
-print_age() {
-  local -r age="$1"
-  printf 'Age: %s\n' "${age}"
 }
 
 #===============================================================================
