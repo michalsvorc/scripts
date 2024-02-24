@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 #
+# Shell script snippet to prompt user for a Yes or No answer.
+#
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
+# Guidelines: https://google.github.io/styleguide/shell
 
+#===============================================================================
 # Prompts the user for a Yes or No answer.
-#
 # Arguments:
 #   $1: The prompt message to display to the user.
-#
 # Returns:
 #   0 if the user answers 'yes'
 #   1 if the user answers 'no'
+#===============================================================================
 prompt_yes_no() {
   while true; do
     read -pr "$1 (y/n): " response

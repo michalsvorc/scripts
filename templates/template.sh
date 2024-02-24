@@ -116,6 +116,7 @@ parse_arguments() {
 
 #===============================================================================
 # Prints an error message.
+#
 # Arguments:
 #   message: The error message.
 # Outputs:
@@ -128,6 +129,7 @@ print_error() {
 
 #===============================================================================
 # Prints the program version.
+#
 # Globals:
 #   VERSION
 # Arguments:
@@ -141,6 +143,7 @@ print_version() {
 
 #===============================================================================
 # Terminates script execution.
+#
 # Arguments:
 #   message: The error message.
 # Outputs:
@@ -158,8 +161,8 @@ terminate() {
 }
 
 #===============================================================================
-# Tests positional arguments
-# with the provided name.
+# Tests positional arguments with the provided name.
+#
 # Arguments:
 #   name: The name to be included in the greeting message.
 # Outputs:
@@ -176,6 +179,7 @@ test_positional_arguments() {
 #===============================================================================
 # Takes a single argument 'name' and prints a greeting message
 # with the provided name.
+#
 # Arguments:
 #   name: The name to be included in the greeting message.
 # Outputs:
@@ -187,8 +191,8 @@ print_name() {
 }
 
 #===============================================================================
-# Takes a single argument 'age' and prints a message
-# with the provided age.
+# Takes a single argument 'age' and prints a message with the provided age.
+#
 # Arguments:
 #   age: The age to be included in the message.
 # Outputs:
