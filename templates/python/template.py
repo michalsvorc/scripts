@@ -39,8 +39,7 @@ def parse_arguments():
         default=DEFAULT_AGE,
         help=f"specify a number for age (default: {DEFAULT_AGE})",
     )
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def print_error(message: str) -> None:
@@ -48,7 +47,7 @@ def print_error(message: str) -> None:
 
 
 def terminate_execution(message: str) -> None:
-    exit_code: int = 1
+    exit_code = 1
     print_error(message)
     sys.exit(exit_code)
 
