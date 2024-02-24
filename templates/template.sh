@@ -27,7 +27,7 @@ fi
 #===============================================================================
 
 readonly VERSION='1.1.0'
-AGE_DEFAULT=42
+readonly AGE_DEFAULT=42
 
 script_name=$(basename "${BASH_SOURCE[0]}")
 readonly script_name
@@ -72,6 +72,10 @@ main() {
 
 #===============================================================================
 # Parses the command-line arguments passed to the script.
+# Globals:
+#   AGE
+#   AGE_DEFAULT
+#   NAME
 #===============================================================================
 parse_arguments() {
   # Options
