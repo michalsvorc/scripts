@@ -11,7 +11,7 @@ import sys
 
 
 VERSION = "1.0.0"
-DEFAULT_AGE = 42
+AGE_DEFAULT = 42
 
 
 def parse_arguments():
@@ -36,8 +36,8 @@ def parse_arguments():
         "--age",
         metavar="age",
         type=int,
-        default=DEFAULT_AGE,
-        help=f"specify a number for age (default: {DEFAULT_AGE})",
+        default=AGE_DEFAULT,
+        help=f"specify a number for age (default: {AGE_DEFAULT})",
     )
     return parser.parse_args()
 
@@ -46,7 +46,7 @@ def print_error(message: str) -> None:
     sys.stderr.write(f"Error: {message}\n\n")
 
 
-def terminate_execution(message: str) -> None:
+def terminate(message: str) -> None:
     exit_code = 1
     print_error(message)
     sys.exit(exit_code)
