@@ -29,7 +29,6 @@ class Command(Enum):
 def main():
     enable_debug_mode()
     args = parse_arguments()
-
     sso_login(args.profile)
 
     try:
@@ -70,14 +69,14 @@ def parse_arguments():
         "--remote-path",
         metavar="path",
         default=REMOTE_PATH_DEFAULT,
-        help=f"Remote path (default: {REMOTE_PATH_DEFAULT})",
+        help=f"remote path (default: {REMOTE_PATH_DEFAULT})",
     )
     parser.add_argument(
         "-l",
         "--local-path",
         metavar="path",
         default=LOCAL_PATH_DEFAULT,
-        help=f"Local path (default: {LOCAL_PATH_DEFAULT})",
+        help=f"local path (default: {LOCAL_PATH_DEFAULT})",
     )
     parser.add_argument(
         "-v",
