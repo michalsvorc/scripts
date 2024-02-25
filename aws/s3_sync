@@ -22,7 +22,7 @@ VERSION = "1.0.0"
 DELETE_MODE: bool = True
 AWS_PROFILE: str = "default"
 LOCAL_PATH: str = os.path.dirname(os.path.realpath(__file__))
-REMOTE_PATH: str = "s3://path/to/bucket"
+REMOTE_PATH: str = "s3://bucket-name"
 
 
 class Command(Enum):
