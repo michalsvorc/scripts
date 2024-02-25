@@ -14,11 +14,13 @@ import pdb
 import subprocess
 import sys
 from enum import Enum
+from typing import Dict, List, Tuple
 
 VERSION = "1.0.0"
-PROFILE_DEFAULT = "default"
-REMOTE_PATH_DEFAULT = "s3://"
-LOCAL_PATH_DEFAULT = os.getcwd()
+AWS_PROFILE = "default"
+LOCAL_PATH = os.path.dirname(os.path.realpath(__file__))
+REMOTE_PATH = "s3://"
+DRY_RUN_FLAG = "--dryrun"
 
 
 class Command(Enum):
@@ -29,22 +31,29 @@ class Command(Enum):
 def main():
     enable_debug_mode()
     args = parse_arguments()
-    sso_login(args.profile)
+    sso_login(AWS_PROFILE)
 
     try:
-        source, target = get_source_and_target(args)
+        source, target = get_source_and_target(
+            args.command, {"local": LOCAL_PATH, "remote": REMOTE_PATH}
+        )
         print(f"Source: {source}\nTarget: {target}\n")
     except InvalidCommandError as e:
         logging.error(f"Caught exception: {e.message}.")
         sys.exit(1)
 
-    # Preview the sync
-    synchronize(source, target, {**vars(args), "dry_run": True})
+    command_partial = construct_command(AWS_PROFILE)(
+        {"source": source, "target": target}
+    )
+    command_preview_run = command_partial(True)
+    command_real_run = command_partial(args.dry_run)
+
+    synchronize(command_preview_run)
 
     if not prompt_user("Confirm this sync?"):
         sys.exit(0)
 
-    synchronize(source, target, vars(args))
+    synchronize(command_real_run)
 
 
 def parse_arguments():
@@ -54,29 +63,7 @@ def parse_arguments():
     parser.add_argument(
         "command",
         choices=[Command.UP.value, Command.DOWN.value],
-        help=f"Specify sync direction. {Command.UP.value}: to remote. {Command.DOWN.value}: to local.",
-    )
-    parser.add_argument(
-        "-p",
-        "--profile",
-        metavar="profile",
-        type=str,
-        default=PROFILE_DEFAULT,
-        help=f"AWS profile (default: {PROFILE_DEFAULT})",
-    )
-    parser.add_argument(
-        "-r",
-        "--remote-path",
-        metavar="path",
-        default=REMOTE_PATH_DEFAULT,
-        help=f"remote path (default: {REMOTE_PATH_DEFAULT})",
-    )
-    parser.add_argument(
-        "-l",
-        "--local-path",
-        metavar="path",
-        default=LOCAL_PATH_DEFAULT,
-        help=f"local path (default: {LOCAL_PATH_DEFAULT})",
+        help=f"specify synchronization direction, {Command.UP.value}: to remote, {Command.DOWN.value}: to local",
     )
     parser.add_argument(
         "-v",
@@ -95,11 +82,14 @@ def parse_arguments():
     return args
 
 
-def get_source_and_target(args) -> tuple[str, str]:
-    if args.command == Command.UP.value:
-        return args.local_path, args.remote_path
-    elif args.command == Command.DOWN.value:
-        return args.remote_path, args.local_path
+def get_source_and_target(command: Command, paths: Dict[str, str]) -> Tuple[str, str]:
+    local = paths.get("local", "")
+    remote = paths.get("remote", "")
+
+    if command == Command.UP.value:
+        return local, remote
+    elif command == Command.DOWN.value:
+        return remote, local
     else:
         raise InvalidCommandError()
 
@@ -115,20 +105,34 @@ def sso_login(profile: str) -> None:
         sys.exit(1)
 
 
-def synchronize(source: str, target: str, args) -> None:
-    command = [
-        "aws",
-        "s3",
-        "sync",
-        source,
-        target,
-        "--profile",
-        args["profile"],
-    ]
+def construct_command(profile: str):
+    def with_path(paths: Dict[str, str]):
+        def with_dry_run(dry_run: bool) -> List[str]:
+            source = paths.get("source", "")
+            target = paths.get("target", "")
+            command = [
+                "aws",
+                "s3",
+                "sync",
+                source,
+                target,
+                "--profile",
+                profile,
+            ]
 
-    if args["dry_run"]:
+            if dry_run:
+                command.append(DRY_RUN_FLAG)
+
+            return command
+
+        return with_dry_run
+
+    return with_path
+
+
+def synchronize(command: List[str]) -> None:
+    if DRY_RUN_FLAG in command:
         print("Performing a trial run with no changes made.")
-        command.append("--dryrun")
 
     subprocess.run(command)
 
