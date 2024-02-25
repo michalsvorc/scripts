@@ -54,7 +54,7 @@ table_read() {
     --profile "${AWS_PROFILE}" \
     --table-name "${SOURCE_TABLE}" \
     --max-items "${BATCH_SIZE}" \
-    $starting_token_flag
+    "${starting_token_flag}"
 }
 
 # Write data to a DynamoDB table from a TMP_FILE input.
