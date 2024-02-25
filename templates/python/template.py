@@ -35,16 +35,16 @@ def parse_arguments():
     )
     parser.add_argument(
         "name",
-        metavar="name",
         type=str,
+        metavar="name",
         help="specify a name for the greeting message",
     )
     parser.add_argument(
         "-a",
         "--age",
-        metavar="age",
         type=int,
         default=AGE_DEFAULT,
+        metavar="age",
         help=f"specify a number for age (default: {AGE_DEFAULT})",
     )
     return parser.parse_args()
