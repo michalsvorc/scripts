@@ -17,7 +17,7 @@
 prompt_yes_no() {
   while true; do
     read -pr "$1 (y/n): " response
-    case "$response" in
+    case "${response}" in
     [Yy]*) return 0 ;;
     [Nn]*) return 1 ;;
     *) echo "Please answer 'yes' or 'no'." ;;

@@ -17,7 +17,7 @@ set -o errtrace # Ensure the error trap handler is properly inherited.
 
 # Enable shell script debugging mode when the DEBUG environment variable is set.
 
-if [[ ${DEBUG-} =~ ^1|[Tt]rue|[Yy]es$ ]]; then
+if [[ "${DEBUG-}" =~ ^1|[Tt]rue|[Yy]es$ ]]; then
   set -o xtrace
   printf '%s\n' 'Shell script debugging mode enabled.'
 fi
@@ -79,7 +79,7 @@ main() {
 #===============================================================================
 parse_arguments() {
   # Options
-  AGE=$AGE_DEFAULT
+  AGE="${AGE_DEFAULT}"
 
   while getopts ":vha:" opt; do
     case $opt in
@@ -125,7 +125,7 @@ parse_arguments() {
 test_positional_arguments() {
   local -r arg_count="$#"
 
-  if [ "$arg_count" -eq 0 ]; then
+  if [ "${arg_count}" -eq 0 ]; then
     terminate 'No positional arguments provided.'
   fi
 }
