@@ -1,86 +1,41 @@
 #!/usr/bin/env bash
 #
+# Resizes the portage directory to the specified size.
+# For use with portage mounted on tmpfs.
+# Dependencies: df, grep, mount
+#
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: df, grep, mount
+# Guidelines: https://google.github.io/styleguide/shell
+# Documentation: https://wiki.gentoo.org/wiki/Portage_TMPDIR_on_tmpfs
 
 #===============================================================================
 # Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # Abort on nonzero exit status.
-set -o nounset      # Abort on unbound variable.
-set -o pipefail     # Don't hide errors within pipes.
-# set -o xtrace       # Set debugging.
+set -o errexit  # Exit if any command exits with a nonzero (error) status.
+set -o nounset  # Disallow expansion of unset variables.
+set -o pipefail # Use last non-zero exit code in a pipeline.
+set -o errtrace # Ensure the error trap handler is properly inherited.
+# set -o xtrace   # Enable shell script debugging mode.
 
 #===============================================================================
 # Variables
 #===============================================================================
 
-version='1.0.0'
-argv0=${0##*/}
-
-target_dir='/var/tmp/portage'
-
-#===============================================================================
-# Usage
-#===============================================================================
-
-usage() {
-  cat <<EOF
-Usage:  ${argv0} [options] <mount size>
-
-Resize portage temporary directory "${target_dir}".
-
-Directory should be registered in "/etc/fstab".
-
-Options:
-    -h, --help      Show help screen and exit.
-    -v, --version   Show program version and exit.
-
-Size: Valid size value for mount command.
-
-Examples:
-    ${argv0} 8G
-
-See: https://wiki.gentoo.org/wiki/Portage_TMPDIR_on_tmpfs
-EOF
-  exit ${1:-0}
-}
-
-#===============================================================================
-# Functions
-#===============================================================================
-
-die() {
-  local message="$1"
-
-  printf 'Error: %s\n\n' "$message" >&2
-
-  usage 1 1>&2
-}
-
-print_version() {
-  printf '%s version: %s\n' "$argv0" "$version"
-}
+readonly MOUNT_SIZE="${1:-}"
+readonly MOUNT_PATH='/var/tmp/portage'
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-test $# -eq 0 && die 'No arguments provided.'
+if [[ "$#" -eq 0 ]]; then
+  printf 'Error: No mount size provided. Exiting.\n'
+  exit 1
+fi
 
-case "${1:-}" in
-  -h | --help )
-    usage 0
-    ;;
-  -v | --version )
-    print_version
-    exit 0
-    ;;
-esac
+printf "Resizing %s to %s...\n" "${MOUNT_PATH}" "${MOUNT_SIZE}"
 
-size="${1:-}"
-
-mount -o remount,size="$size" "$target_dir" \
-  && (df | grep "$target_dir")
+sudo mount -o remount,size="${MOUNT_SIZE}" "${MOUNT_PATH}" &&
+  (df | grep "${MOUNT_PATH}")

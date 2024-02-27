@@ -1,85 +1,31 @@
 #!/usr/bin/env bash
 #
+# Update Gentoo Linux @world packages with predefined emerge flags.
+# Dependencies: emerge
+#
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: emerge
+# Guidelines: https://google.github.io/styleguide/shell
 
 #===============================================================================
 # Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # Abort on nonzero exit status.
-set -o nounset      # Abort on unbound variable.
-set -o pipefail     # Don't hide errors within pipes.
-# set -o xtrace       # Set debugging.
-
-#===============================================================================
-# Variables
-#===============================================================================
-
-version='1.0.0'
-argv0=${0##*/}
-
-emerge_flags='uvDN'
-
-#===============================================================================
-# Usage
-#===============================================================================
-
-usage() {
-  cat <<EOF
-Usage:  ${argv0} [options] [additional emerge flags]
-
-Update Gentoo Linux @world packages with predefined emerge flags.
-
-Deafult emerge flags: ${emerge_flags}
-
-You can supply additional emerge flags.
-
-Options:
-    --help      Show help screen and exit.
-    --version   Show program version and exit.
-
-Examples:
-    ${argv0}        Update packages with default flags.
-    ${argv0} -p     Pretended update to see list of changes.
-    ${argv0} -av    Ask before update, verbose.
-EOF
-  exit ${1:-0}
-}
-
-#===============================================================================
-# Functions
-#===============================================================================
-
-die() {
-  local message="$1"
-
-  printf 'Error: %s\n\n' "$message" >&2
-
-  usage 1 1>&2
-}
-
-print_version() {
-  printf '%s version: %s\n' "$argv0" "$version"
-}
+set -o errexit  # Exit if any command exits with a nonzero (error) status.
+set -o nounset  # Disallow expansion of unset variables.
+set -o pipefail # Use last non-zero exit code in a pipeline.
+set -o errtrace # Ensure the error trap handler is properly inherited.
+# set -o xtrace   # Enable shell script debugging mode.
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-case "${1:-}" in
-  --help )
-    usage 0
-    ;;
-  --version )
-    print_version
-    exit 0
-    ;;
-esac
-
-emerge \
-  "-${emerge_flags}" \
-  $@ \
-   --with-bdeps=y \
+sudo emerge \
+  --update \
+  --verbose \
+  --deep \
+  --newuse \
+  --with-bdeps=y \
+  "$@" \
   @world

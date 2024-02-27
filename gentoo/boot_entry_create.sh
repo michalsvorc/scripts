@@ -1,52 +1,45 @@
 #!/usr/bin/env bash
 #
+# Create a new UEFI boot entry for Gentoo Linux.
+# Dependencies: efibootmgr
+#
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Description: Create an EFI boot entry with efibootmgr.
-# Dependencies: efibootmgr
+# Guidelines: https://google.github.io/styleguide/shell
 
 #===============================================================================
 # Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # Abort on nonzero exit status.
-set -o nounset      # Abort on unbound variable.
-set -o pipefail     # Don't hide errors within pipes.
-# set -o xtrace       # Set debugging.
+set -o errexit  # Exit if any command exits with a nonzero (error) status.
+set -o nounset  # Disallow expansion of unset variables.
+set -o pipefail # Use last non-zero exit code in a pipeline.
+set -o errtrace # Ensure the error trap handler is properly inherited.
+# set -o xtrace   # Enable shell script debugging mode.
 
 #===============================================================================
 # Variables
 #===============================================================================
 
-version="${1}"
-
-#===============================================================================
-# Functions
-#===============================================================================
-
-die() {
-  local message="$1"
-
-  printf 'Error: %s\n\n' "$message" >&2
-
-  usage 1 1>&2
-}
-
-print_version() {
-  printf 'Version: %s\n' "$version"
-}
+readonly KERNEL_VERSION="${1:-}"
+readonly LABEL="Gentoo ${KERNEL_VERSION}"
+readonly EFI_PATH='\EFI\Gentoo'
+readonly DEVICE='/dev/nvme0n1'
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-[ -z "$version" ] && die 'Provided version is empty.'
+if [[ -z "${KERNEL_VERSION}" ]]; then
+  printf 'Error: No kernel version provided. Exiting.\n'
+  exit 1
+fi
 
-print_version
-efibootmgr \
-  -c \
-  -d /dev/nvme0n1 \
-  -p 1 \
-  -L "Gentoo ${version}" \
-  -l "\EFI\Gentoo\vmlinuz-${version}.efi" \
-  && efibootmgr -v
+printf 'Creating a new UEFI boot entry for %s...\n' "${LABEL}"
+
+sudo efibootmgr \
+  --create \
+  --disk "${DEVICE}" \
+  --part 1 \
+  --label "Gentoo ${KERNEL_VERSION}" \
+  --loader "${EFI_PATH}/vmlinuz-${KERNEL_VERSION}.efi"
