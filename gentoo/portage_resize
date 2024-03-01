@@ -23,8 +23,8 @@ set -o errtrace # Ensure the error trap handler is properly inherited.
 # Variables
 #===============================================================================
 
-readonly MOUNT_SIZE="${1:-}"
 readonly MOUNT_PATH='/var/tmp/portage'
+readonly mount_size="${1:-}"
 
 #===============================================================================
 # Execution
@@ -35,7 +35,7 @@ if [[ "$#" -eq 0 ]]; then
   exit 1
 fi
 
-printf "Resizing %s to %s...\n" "${MOUNT_PATH}" "${MOUNT_SIZE}"
+printf "Resizing %s to %s...\n" "${MOUNT_PATH}" "${mount_size}"
 
-sudo mount -o remount,size="${MOUNT_SIZE}" "${MOUNT_PATH}" &&
+sudo mount -o remount,size="${mount_size}" "${MOUNT_PATH}" &&
   (df | grep "${MOUNT_PATH}")

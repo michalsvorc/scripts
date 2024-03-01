@@ -21,25 +21,25 @@ set -o errtrace # Ensure the error trap handler is properly inherited.
 # Variables
 #===============================================================================
 
-readonly KERNEL_VERSION="${1:-}"
-readonly LABEL="Gentoo ${KERNEL_VERSION}"
 readonly EFI_PATH='\EFI\Gentoo'
 readonly DEVICE='/dev/nvme0n1'
+readonly kernel_version="${1:-}"
+readonly label="Gentoo ${kernel_version}"
 
 #===============================================================================
 # Execution
 #===============================================================================
 
-if [[ -z "${KERNEL_VERSION}" ]]; then
+if [[ -z "${kernel_version}" ]]; then
   printf 'Error: No kernel version provided. Exiting.\n'
   exit 1
 fi
 
-printf 'Creating a new UEFI boot entry for %s...\n' "${LABEL}"
+printf 'Creating a new UEFI boot entry for %s...\n' "${label}"
 
 sudo efibootmgr \
   --create \
   --disk "${DEVICE}" \
   --part 1 \
-  --label "Gentoo ${KERNEL_VERSION}" \
-  --loader "${EFI_PATH}/vmlinuz-${KERNEL_VERSION}.efi"
+  --label "Gentoo ${kernel_version}" \
+  --loader "${EFI_PATH}/vmlinuz-${kernel_version}.efi"

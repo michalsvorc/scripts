@@ -28,7 +28,6 @@ fi
 
 readonly VERSION='1.1.0'
 readonly AGE_DEFAULT=42
-
 script_name=$(basename "${BASH_SOURCE[0]}")
 readonly script_name
 
@@ -59,27 +58,27 @@ EOF
 #===============================================================================
 # Entry point of the script.
 # Globals:
-#   AGE
-#   NAME
+#   age
+#   name
 # Arguments:
 #   None
 #===============================================================================
 main() {
   parse_arguments "$@"
-  print_name "${NAME}"
-  print_age "${AGE}"
+  print_name
+  print_age
 }
 
 #===============================================================================
 # Parses the command-line arguments passed to the script.
 # Globals:
-#   AGE
+#   age
 #   AGE_DEFAULT
-#   NAME
+#   name
 #===============================================================================
 parse_arguments() {
   # Options
-  AGE="${AGE_DEFAULT}"
+  age="${AGE_DEFAULT}"
 
   while getopts ":vha:" opt; do
     case $opt in
@@ -92,7 +91,7 @@ parse_arguments() {
       exit 0
       ;;
     a)
-      AGE="${OPTARG}"
+      age="${OPTARG}"
       ;;
     \?)
       terminate "Invalid option: -${OPTARG}"
@@ -107,11 +106,11 @@ parse_arguments() {
 
   # Positional arguments
   test_positional_arguments "$@"
-  NAME="${1:-}"
+  name="${1:-}"
 
   # Mark globals readonly
-  readonly AGE
-  readonly NAME
+  readonly age
+  readonly name
 }
 
 #===============================================================================
@@ -140,7 +139,6 @@ test_positional_arguments() {
 #   Prints a greeting message to stdout.
 #===============================================================================
 print_name() {
-  local -r name="$1"
   printf 'Hello, %s!\n' "${name}"
 }
 
@@ -153,7 +151,6 @@ print_name() {
 #   Prints a greeting message to stdout.
 #===============================================================================
 print_age() {
-  local -r age="$1"
   printf 'Age: %s\n' "${age}"
 }
 

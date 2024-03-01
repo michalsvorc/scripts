@@ -20,9 +20,9 @@ set -o errtrace # Ensure the error trap handler is properly inherited.
 # Variables
 #===============================================================================
 
-readonly KERNEL_VERSION="${1:-}"
 readonly BOOT_PATH='/boot'
-readonly EFI_PATH="${BOOT_PATH}/EFI/Gentoo"
+readonly kernel_version="${1:-}"
+readonly efi_path="${BOOT_PATH}/EFI/Gentoo"
 
 #===============================================================================
 # Execution
@@ -38,6 +38,6 @@ if [[ ! -d "${BOOT_PATH}" ]]; then
   exit 1
 fi
 
-printf 'Copying vmlinuz-%s to %s...\n' "${KERNEL_VERSION}" "${EFI_PATH}"
+printf 'Copying vmlinuz-%s to %s...\n' "${kernel_version}" "${efi_path}"
 
-sudo cp "${BOOT_PATH}/vmlinuz-${KERNEL_VERSION}" "${EFI_PATH}/vmlinuz-${KERNEL_VERSION}.efi"
+sudo cp "${BOOT_PATH}/vmlinuz-${kernel_version}" "${efi_path}/vmlinuz-${kernel_version}.efi"
