@@ -68,7 +68,7 @@ def parse_arguments():
     )
     parser.add_argument(
         "command",
-        choices=[Command.UP.value, Command.DOWN.value],
+        choices=[command.value for command in Command],
         help=f"specify synchronization direction, {Command.UP.value}: to remote, {Command.DOWN.value}: to local",
     )
     parser.add_argument(
