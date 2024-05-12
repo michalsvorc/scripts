@@ -8,9 +8,9 @@
 # Abort the script on errors and unbound variables
 #===============================================================================
 
-set -o errexit      # Abort on nonzero exit status.
-set -o nounset      # Abort on unbound variable.
-set -o pipefail     # Don't hide errors within pipes.
+set -o errexit  # Abort on nonzero exit status.
+set -o nounset  # Abort on unbound variable.
+set -o pipefail # Don't hide errors within pipes.
 # set -o xtrace       # Set debugging.
 
 #===============================================================================
@@ -54,8 +54,7 @@ EOF
 die() {
   local message="$1"
 
-  printf 'Error: %s\n\n' "$message" >&2
-  usage 1 1>&2
+  printf 'Error: %s\n' "$message" >&2
 }
 
 print_version() {
@@ -65,8 +64,8 @@ print_version() {
 restart_pcsc() {
   printf 'Starting PC/SC Daemon\n'
 
-  sudo rc-service pcscd restart \
-    && ykman info
+  sudo rc-service pcscd restart &&
+    ykman info
 }
 
 select_oath_account() {
@@ -79,9 +78,9 @@ get_oath_code() {
   local account="$1"
 
   local code=$(
-    ykman oath accounts code "$account" \
-      | tail -c 7 \
-      | tr -d '\n'
+    ykman oath accounts code "$account" |
+      tail -c 7 |
+      tr -d '\n'
   )
 
   printf '%s' "$code"
@@ -97,30 +96,31 @@ send_to_clipboard() {
 # Execution
 #===============================================================================
 
-test $# -eq 0 && die 'No arguments provided.'
+test $# -eq 0 && die 'No arguments provided.' && usage 1 1>&2
 
 case "${1:-}" in
-  -h | --help )
-    usage 0
-    ;;
-  -v | --version )
-    print_version
-    exit 0
-    ;;
-  start )
-    shift
-    restart_pcsc
-    ;;
-  code )
-    shift
-    account="${1:-}"
-    test -z "$account" && account=$(select_oath_account)
-    code=$(get_oath_code "$account")
-    send_to_clipboard "$code" \
-      && printf 'Code for %s copied to clipboard.\n' "$account"
-    ;;
-  * )
-    die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
-    ;;
+-h | --help)
+  usage 0
+  ;;
+-v | --version)
+  print_version
+  exit 0
+  ;;
+start)
+  shift
+  restart_pcsc
+  ;;
+code)
+  shift
+  account="${1:-}"
+  test -z "$account" && account=$(select_oath_account)
+  code=$(get_oath_code "$account")
+  [[ -z ${code} ]] && die "No code for ${account} found." && exit 1
+  send_to_clipboard "$code" &&
+    printf 'Code for %s copied to clipboard.\n' "$account"
+  ;;
+*)
+  die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
+  usage 1 1>&2
+  ;;
 esac
-
