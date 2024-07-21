@@ -22,5 +22,5 @@ set -o errtrace # Ensure the error trap handler is properly inherited.
 # Execution
 #===============================================================================
 
-emerge --update --newuse --deep @world &&
-  emerge --ask --depclean
+sudo emerge --update --newuse --deep @world &&
+  sudo emerge --ask --depclean
