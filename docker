@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+#
+# Docker utilities.
+#
+# Author: Michal Svorc <dev@michalsvorc.com>
+# License: MIT license (https://opensource.org/licenses/MIT)
+# Guidelines: https://google.github.io/styleguide/shell
+
+#===============================================================================
+# Shell script execution options
+#===============================================================================
+
+set -o errexit  # Exit if any command exits with a nonzero (error) status.
+set -o nounset  # Disallow expansion of unset variables.
+set -o pipefail # Use last non-zero exit code in a pipeline.
+set -o errtrace # Ensure the error trap handler is properly inherited.
+
+# Enable shell script debugging mode when the DEBUG environment variable is set.
+
+if [[ "${DEBUG-}" =~ ^1|[Tt]rue|[Yy]es$ ]]; then
+  set -o xtrace
+  printf '%s\n' 'Shell script debugging mode enabled.'
+fi
+
+#===============================================================================
+# Variables
+#===============================================================================
+
+readonly VERSION='1.0.0'
+script_name="$(basename "${BASH_SOURCE[0]}") utils"
+readonly script_name
+
+#===============================================================================
+# Usage
+#===============================================================================
+
+print_usage() {
+  cat <<EOF
+Usage: ${script_name} [--help] [--version] {container|image|attach|init}
+
+Docker utilities script.
+
+Commands:
+  container   Containers interactive list
+  image       Images interactive list
+  attach      Start and attach to a container
+  init        Initialize the Docker service
+
+Options:
+  --help      Show this help message and exit
+  --version   Show program version and exit
+EOF
+}
+
+#===============================================================================
+# Functions
+#===============================================================================
+
+#===============================================================================
+# Entry point of the script.
+# Arguments:
+#   positional arguments
+#===============================================================================
+main() {
+  parse_arguments "$@"
+}
+
+#===============================================================================
+# Containers interactive list.
+# Arguments:
+#   None
+#===============================================================================
+list_containers() {
+  docker container ls -a | awk 'NR>1' | fzf | awk '{print $1}'
+}
+
+#===============================================================================
+# Containers interactive list.
+# Arguments:
+#   None
+#===============================================================================
+list_images() {
+  docker image ls -a | awk 'NR>1' | fzf | awk '{print $3}'
+}
+
+#===============================================================================
+# Interactive start and attach container.
+# Arguments:
+#   None
+#===============================================================================
+attach_container() {
+  CONTAINER_ID=$(list_containers)
+  if [ -n "$CONTAINER_ID" ]; then
+    docker start "$CONTAINER_ID" && docker attach "$CONTAINER_ID"
+  else
+    echo "No container selected."
+  fi
+}
+
+#===============================================================================
+# Initialize docker service.
+# Arguments:
+#   None
+#===============================================================================
+init_docker() {
+  sudo rc-service docker start
+}
+
+#===============================================================================
+# Parses the command-line arguments passed to the script.
+#===============================================================================
+parse_arguments() {
+  if [ $# -eq 0 ]; then
+    print_usage
+    exit 1
+  fi
+
+  case "$1" in
+  attach)
+    attach_container
+    ;;
+  init)
+    init_docker
+    ;;
+  container)
+    list_containers
+    ;;
+  image)
+    list_images
+    ;;
+  --help)
+    print_usage
+    ;;
+  --version)
+    print_version
+    ;;
+  *)
+    terminate "Unknown command: $1"
+    ;;
+  esac
+}
+
+#===============================================================================
+# Prints an error message.
+#
+# Arguments:
+#   message: The error message.
+# Outputs:
+#   Writes the error message to stderr.
+#===============================================================================
+print_error() {
+  local -r message="$1"
+  printf 'Error: %s\n\n' "${message}" >&2
+}
+
+#===============================================================================
+# Prints the program version.
+#
+# Globals:
+#   VERSION
+# Arguments:
+#   None
+# Outputs:
+#   Writes the program version to stdout.
+#===============================================================================
+print_version() {
+  printf '%s version: %s\n' "${script_name}" "${VERSION}"
+}
+
+#===============================================================================
+# Terminates script execution.
+#
+# Arguments:
+#   message: The error message.
+# Outputs:
+#   Writes the error message stderr.
+# Returns:
+#   Exits with a nonzero (error) status.
+#===============================================================================
+terminate() {
+  local -r message="$1"
+  local -r EXIT_CODE=1
+
+  print_error "${message}"
+  print_usage
+  exit "${EXIT_CODE}"
+}
+
+#===============================================================================
+# Execution
+#===============================================================================
+
+main "$@"
