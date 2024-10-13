@@ -36,19 +36,18 @@ readonly script_name
 
 print_usage() {
   cat <<EOF
-Usage: ${script_name} [--help] [--version] {container|image|attach|init}
+Usage: ${script_name} [--help] [--version] {container|image|attach}
 
 Docker utilities script.
 
 Commands:
-  container   Containers interactive list
-  image       Images interactive list
-  attach      Start and attach to a container
-  init        Initialize the Docker service
+  container   Interactive list of containers.
+  image       Interactive list of images.
+  attach      Start and attach to a container.
 
 Options:
-  --help      Show this help message and exit
-  --version   Show program version and exit
+  --help      Show this help message and exit.
+  --version   Show program version and exit.
 EOF
 }
 
@@ -98,15 +97,6 @@ attach_container() {
 }
 
 #===============================================================================
-# Initialize docker service.
-# Arguments:
-#   None
-#===============================================================================
-init_docker() {
-  sudo rc-service docker start
-}
-
-#===============================================================================
 # Parses the command-line arguments passed to the script.
 #===============================================================================
 parse_arguments() {
@@ -118,9 +108,6 @@ parse_arguments() {
   case "$1" in
   attach)
     attach_container
-    ;;
-  init)
-    init_docker
     ;;
   container)
     list_containers
