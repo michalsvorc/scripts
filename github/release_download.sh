@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 #
-# Description: Download assets from a GitHub release.
+# Downloads assets from a GitHub release.
 #
+# Version: 1.1.0
 # Dependencies: curl, cut, GNU grep
-#
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
 
@@ -20,7 +20,6 @@ set -o pipefail # Don't hide errors within pipes.
 # Variables
 #===============================================================================
 
-readonly version='1.1.0'
 readonly script='gh_release_download.sh'
 
 #===============================================================================
@@ -35,8 +34,6 @@ Download release asset from GitHub.
 
 Options:
   -h              Show help screen and exit.
-  -v              Show program version and exit.
-
   -t <tag>        Release tag, defaults to latest release.
 
 Arguments:
@@ -68,10 +65,6 @@ die() {
 
   printf 'Error: %s\n\n' "$message" >&2
   usage 1 1>&2
-}
-
-print_version() {
-  printf '%s version: %s\n' "$script" "$version"
 }
 
 test_argument() {
@@ -120,16 +113,11 @@ main() {
 
 test $# -eq 0 && die 'No arguments provided.'
 
-while getopts ":hvt:" options; do
+while getopts ":ht:" options; do
   case "${options}" in
   h)
     usage 0
     ;;
-  v)
-    print_version
-    exit 0
-    ;;
-
   t)
     tag="${OPTARG-}"
     ;;

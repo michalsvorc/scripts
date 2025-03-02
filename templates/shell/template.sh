@@ -2,6 +2,7 @@
 #
 # Shell script template.
 #
+# Version: 1.1.0
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
 # Guidelines: https://google.github.io/styleguide/shell
@@ -26,7 +27,6 @@ fi
 # Variables
 #===============================================================================
 
-readonly VERSION='1.1.0'
 readonly AGE_DEFAULT=42
 script_name=$(basename "${BASH_SOURCE[0]}")
 readonly script_name
@@ -46,7 +46,6 @@ Positional arguments:
 
 Options:
   -h            show help screen and exit
-  -v            show program version and exit
   -a age        specify a number for age (default: ${AGE_DEFAULT})
 EOF
 }
@@ -80,12 +79,8 @@ parse_arguments() {
   # Options
   age="${AGE_DEFAULT}"
 
-  while getopts ":vha:" opt; do
+  while getopts ":ha:" opt; do
     case $opt in
-    v)
-      print_version
-      exit 0
-      ;;
     h)
       print_usage
       exit 0
@@ -165,20 +160,6 @@ print_age() {
 print_error() {
   local -r message="$1"
   printf 'Error: %s\n\n' "${message}" >&2
-}
-
-#===============================================================================
-# Prints the program version.
-#
-# Globals:
-#   VERSION
-# Arguments:
-#   None
-# Outputs:
-#   Writes the program version to stdout.
-#===============================================================================
-print_version() {
-  printf '%s version: %s\n' "${script_name}" "${VERSION}"
 }
 
 #===============================================================================

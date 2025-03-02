@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #
+# Version: 1.0.0
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
 # Dependencies: ykman, fzf, xclip
@@ -14,12 +15,6 @@ set -o pipefail # Don't hide errors within pipes.
 # set -o xtrace       # Set debugging.
 
 #===============================================================================
-# Variables
-#===============================================================================
-
-version='1.0.0'
-
-#===============================================================================
 # Usage
 #===============================================================================
 
@@ -31,7 +26,6 @@ Shortcuts to Yubikey CLI manager.
 
 Options:
   -h, --help      Show help screen and exit.
-  -v, --version   Show program version and exit.
 
 Commands:
   code [account]  Send OTP code for oath account to clipboard
@@ -57,10 +51,6 @@ die() {
   printf 'Error: %s\n' "$message" >&2
 }
 
-print_version() {
-  printf '%s version: %s\n' "$version"
-}
-
 restart_pcsc() {
   printf 'Starting PC/SC Daemon\n'
 
@@ -69,7 +59,8 @@ restart_pcsc() {
 }
 
 select_oath_account() {
-  local account=$(ykman oath accounts list | fzf)
+  local account
+  account=$(ykman oath accounts list | fzf)
 
   printf '%s' "$account"
 }
@@ -77,7 +68,8 @@ select_oath_account() {
 get_oath_code() {
   local account="$1"
 
-  local code=$(
+  local code
+  code=$(
     ykman oath accounts code "$account" |
       tail -c 7 |
       tr -d '\n'
@@ -101,10 +93,6 @@ test $# -eq 0 && die 'No arguments provided.' && usage 1 1>&2
 case "${1:-}" in
 -h | --help)
   usage 0
-  ;;
--v | --version)
-  print_version
-  exit 0
   ;;
 start)
   shift

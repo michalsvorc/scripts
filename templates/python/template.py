@@ -2,6 +2,7 @@
 #
 # Python script template.
 #
+# Version: 1.0.0
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
 # Guidelines: https://google.github.io/styleguide/pyguide
@@ -11,7 +12,6 @@ import logging
 import os
 import pdb
 
-VERSION = "1.0.0"
 AGE_DEFAULT = 42
 
 
@@ -25,13 +25,6 @@ def main():
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description="Basic Python script template. Prints a greeting message."
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=f"%(prog)s {VERSION}",
-        help="show program version and exit",
     )
     parser.add_argument(
         "name",
