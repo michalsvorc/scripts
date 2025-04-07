@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+# JWT decoder.
+#
+# Version: 1.0.0
+# Author: Michal Svorc <dev@michalsvorc.com>
+# License: MIT license (https://opensource.org/licenses/MIT)
+# Guidelines: https://google.github.io/styleguide/pyguide
+
+import sys
+import base64
+import binascii
+import json
+
+
+def decode_jwt_part(encoded_data):
+    try:
+        padded_data = encoded_data + "=="
+        decoded_bytes = base64.urlsafe_b64decode(padded_data)
+        return decoded_bytes.decode("utf-8")
+
+    except binascii.Error as e:
+        print(f"Base64 decoding error: {e}")
+        return None
+    except UnicodeDecodeError as e:
+        print(f"Unicode decoding error: {e}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: ./main <token>")
+        sys.exit(1)
+
+    jwt_token = sys.argv[1]
+
+    try:
+        parts = jwt_token.split(".")
+        if len(parts) != 3:
+            raise ValueError(
+                "Invalid JWT format. Expected 3 parts: header.payload.signature"
+            )
+        header = parts[0]
+        payload = parts[1]
+        signature = parts[2]
+
+        decoded_header = decode_jwt_part(header)
+        decoded_payload = decode_jwt_part(payload)
+
+        jwt_json = {
+            "Header": json.loads(decoded_header) if decoded_header else None,
+            "Payload": json.loads(decoded_payload) if decoded_payload else None,
+            "Signature": signature,
+        }
+
+        print(json.dumps(jwt_json, indent=4))
+
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
