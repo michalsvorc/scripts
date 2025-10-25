@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+# Dependencies:
+#
+# System gpgme with python integration.
+# Gentoo Linux: https://packages.gentoo.org/packages/app-crypt/gpgme
+
+import os
+import gpg
+import re
+import sys
+
+
+def get_default_key_from_gnupg_conf():
+    """
+    Parse gnupg.conf to find the default-key setting.
+    Uses GNUPGHOME environment variable explicitly.
+    Exits on error if GNUPGHOME is not defined or if default-key is missing.
+    """
+    config_file = "gpg.conf"
+    gnupg_home = os.environ.get("GNUPGHOME")
+    if not gnupg_home:
+        print("ERROR: GNUPGHOME environment variable is not set.", file=sys.stderr)
+        sys.exit(1)
+
+    conf_path = os.path.join(gnupg_home, config_file)
+    default_key_pattern = re.compile(r"^\s*default-key\s+([0-9A-Fa-f]+)", re.IGNORECASE)
+
+    try:
+        with open(conf_path, "r") as f:
+            for line in f:
+                match = default_key_pattern.match(line)
+                if match:
+                    return match.group(1)
+    except FileNotFoundError:
+        print(f"ERROR: gnupg.conf not found at '{conf_path}'", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"ERROR: default-key not found in '{conf_path}'", file=sys.stderr)
+    sys.exit(1)
+
+
+# Set the DEFAULT_KEY based on gnupg.conf
+DEFAULT_KEY = get_default_key_from_gnupg_conf()
+
+# Replace these with your actual key fingerprint(s)
+DEFAULT_KEY = "2D705A8ACFD45AE6BED786441CBA4FD3F124B0F6"
+NEW_RECIPIENT = DEFAULT_KEY
+SIGNING_KEY = DEFAULT_KEY
+
+
+def print_ok(msg):
+    print(f"OK: {msg}")
+
+
+def print_error(msg):
+    print(f"ERROR: {msg}", file=sys.stderr)
+
+
+def decrypt_file(ctx, encrypted_file):
+    with open(encrypted_file, "rb") as fin:
+        decrypted_data, _, _ = ctx.decrypt(fin)
+    return decrypted_data
+
+
+def encrypt_and_sign_file(ctx, plaintext_data, recipients):
+    encrypted_data, _, _ = ctx.encrypt(
+        plaintext_data,
+        recipients=recipients,
+        sign=True,
+        always_trust=True,  # Ensure you've verified recipient keys beforehand
+    )
+    return encrypted_data
+
+
+def process_file(ctx, filepath, recipients):
+    try:
+        decrypted = decrypt_file(ctx, filepath)
+    except gpg.errors.GPGMEError as e:
+        print_error(f"Failed to decrypt '{filepath}': {e}")
+        return
+
+    try:
+        encrypted = encrypt_and_sign_file(ctx, decrypted, recipients)
+    except gpg.errors.GPGMEError as e:
+        print_error(f"Failed to encrypt/sign '{filepath}': {e}")
+        return
+
+    with open(filepath, "wb") as fout:
+        fout.write(encrypted)
+
+    print_ok(f"Processed '{filepath}'")
+
+
+def main():
+    recipients_fprs = [NEW_RECIPIENT]
+
+    with gpg.Context() as ctx:
+        # Fetch signing key object; must have secret=True
+        try:
+            signing_key_obj = ctx.get_key(SIGNING_KEY, secret=True)
+        except gpg.errors.GPGMEError as e:
+            print_error(f"Failed to find signing key '{SIGNING_KEY}': {e}")
+            sys.exit(1)
+        ctx.signers = [signing_key_obj]
+
+        # Fetch recipient key objects
+        recipient_keys = []
+        for fpr in recipients_fprs:
+            try:
+                recipient_key = ctx.get_key(fpr)
+                recipient_keys.append(recipient_key)
+            except gpg.errors.GPGMEError as e:
+                print_error(f"Failed to find recipient key '{fpr}': {e}")
+                sys.exit(1)
+
+        # Walk the directory tree and process files
+        for dirpath, _, files in os.walk("."):
+            for file in files:
+                if file.endswith(".gpg"):
+                    filepath = os.path.join(dirpath, file)
+                    process_file(ctx, filepath, recipient_keys)
+
+
+if __name__ == "__main__":
+    main()
