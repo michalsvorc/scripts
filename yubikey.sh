@@ -3,7 +3,6 @@
 # Version: 1.0.0
 # Author: Michal Svorc <dev@michalsvorc.com>
 # License: MIT license (https://opensource.org/licenses/MIT)
-# Dependencies: ykman, fzf, xclip
 
 #===============================================================================
 # Abort the script on errors and unbound variables
@@ -20,95 +19,103 @@ set -o pipefail # Don't hide errors within pipes.
 
 usage() {
   cat <<EOF
-Usage: yubikey [options] [command]
-
-Shortcuts to Yubikey CLI manager.
+Usage:
+  yubikey [options] [command]
 
 Options:
-  -h, --help      Show help screen and exit.
+  -h, --help      Display this help message and exit.
 
 Commands:
-  code [account]  Send OTP code for oath account to clipboard
-                  Opens fuzzy search when account is not provided.
-  start           Start PC/SC Daemon.
+  code [account]  Retrieve and copy the OTP code for the specified OATH account to
+                  the clipboard. If no account is specified, a fuzzy search will
+                  be initiated to select an account.
+
+Description:
+  A command-line utility for managing Yubikey operations, including OTP code retrieval
+  and PC/SC Daemon management.
 
 Examples:
-  yubikey start
-  yubikey code
-  yubikey code myname
+  yubikey
+    Restarts the PC/SC Daemon and displays Yubikey manager information.
 
+  yubikey code
+    Prompts for an OATH account selection and copies the corresponding OTP code to
+    the clipboard.
+
+  yubikey code [account_name]
+    Retrieves and copies the OTP code for the specified OATH account to the clipboard.
+
+Dependencies:
+  ykman, fzf, xclip, rc-service
 EOF
-  exit ${1:-0}
+  exit "${1:-0}"
 }
 
 #===============================================================================
 # Functions
 #===============================================================================
 
+# Terminates the script with an error message
 die() {
   local message="$1"
-
   printf 'Error: %s\n' "$message" >&2
+  exit 1
 }
 
+# Restarts the PC/SC Daemon and displays Yubikey manager information
 restart_pcsc() {
-  printf 'Starting PC/SC Daemon\n'
-
-  sudo rc-service pcscd restart &&
-    ykman info
+  echo 'Starting PC/SC Daemon'
+  sudo rc-service pcscd restart || die 'Failed to restart PC/SC Daemon'
+  ykman info || die 'Failed to retrieve Yubikey manager information'
 }
 
+# Prompts the user to select an OATH account using fuzzy search
 select_oath_account() {
   local account
-  account=$(ykman oath accounts list | fzf)
-
-  printf '%s' "$account"
+  account=$(ykman oath accounts list | fzf) || die 'Failed to list OATH accounts'
+  echo "$account"
 }
 
+# Retrieves the OTP code for a given OATH account
 get_oath_code() {
   local account="$1"
-
   local code
-  code=$(
-    ykman oath accounts code "$account" |
-      tail -c 7 |
-      tr -d '\n'
-  )
-
-  printf '%s' "$code"
+  code=$(ykman oath accounts code "$account" | tail -c 7 | tr -d '\n') || die "Failed to retrieve code for account: $account"
+  echo "$code"
 }
 
+# Sends the selected OTP code to the clipboard
 send_to_clipboard() {
-  local selection="$1"
-
-  printf '%s' "$selection" | xclip -selection c -i
+  local code="$1"
+  echo "$code" | xclip -selection c -i || die 'Failed to copy code to clipboard'
 }
 
 #===============================================================================
-# Execution
+# Main Execution
 #===============================================================================
 
-test $# -eq 0 && die 'No arguments provided.' && usage 1 1>&2
+# Check if no arguments are provided
+if [ $# -eq 0 ]; then
+  restart_pcsc
+  exit 0
+fi
 
+# Parse command-line arguments
 case "${1:-}" in
 -h | --help)
   usage 0
   ;;
-start)
-  shift
-  restart_pcsc
-  ;;
 code)
   shift
   account="${1:-}"
-  test -z "$account" && account=$(select_oath_account)
+  if [ -z "$account" ]; then
+    account=$(select_oath_account)
+  fi
   code=$(get_oath_code "$account")
-  [[ -z ${code} ]] && die "No code for ${account} found." && exit 1
-  send_to_clipboard "$code" &&
-    printf 'Code for %s copied to clipboard.\n' "$account"
+  send_to_clipboard "$code"
+  printf 'Code for %s copied to clipboard.\n' "$account"
   ;;
 *)
-  die "$(printf 'Unrecognized argument "%s".' "${1#-}")"
-  usage 1 1>&2
+  die "Unrecognized argument: ${1#-}"
   ;;
 esac
